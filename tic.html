@@ -1628,13 +1628,12 @@ class MCTSNode {
     // 确保获胜率在0-1之间
     const normalizedWinRate = Math.max(0, Math.min(1, winRate));
     
-    // 计算探索项，这个值本身就是正数，使用温度参数
+    // 计算探索项，使用温度参数
     const exploration = Math.sqrt(2 * temperature * Math.log(this.parent.visits) / this.visits);
     
-    // 基础UCB值
-    const ucbValue = this.state.movedPlayer === standpoint ? 
-      normalizedWinRate + exploration : 
-      (1 - normalizedWinRate) + exploration;
+    // 移除对抗判断，只保留基本UCB计算
+    // 在回溯阶段已经正确处理了对抗关系，这里不需要再次处理
+    const ucbValue = normalizedWinRate + exploration;
     
     // RAVE值（如果有足够数据）
     if (this.raveVisits > 0) {
@@ -1746,13 +1745,20 @@ class MCTS {
     // 反向传播 - 同时更新AMAF/RAVE统计
     while (node !== null) {
       node.visits++;
+      
+      // 修改胜负判断，正确处理对抗关系
       if (result === 0) {
-        node.wins += 0.5;  // 平局奖励
-      } else if (result === this.currentPlayer) {
-        node.wins += 1.0;  // 获胜奖励
+        // 平局
+        node.wins += 0.5;
+      } else if (node.state.movedPlayer === result) {
+        // 当前节点的落子导致了获胜（这对node.state.currentPlayer来说是不利的）
+        node.wins += 0.0;  // 不加分，表示这是对手的有利节点
+      } else {
+        // 当前节点的落子没有导致立即获胜，但最终获得了胜利
+        node.wins += 1.0;  // 加满分，表示这是对当前玩家有利的节点
       }
       
-      // 更新AMAF/RAVE统计
+      // 更新AMAF/RAVE统计 - 保持原有逻辑
       if (node.parent !== null) {
         // 获取所有兄弟节点
         const siblings = node.parent.children;
@@ -1763,10 +1769,13 @@ class MCTS {
             for (const sibling of siblings) {
               if (sibling.state.lastMove === moveInfo.move) {
                 sibling.raveVisits++;
-                if (result === moveInfo.player) {
-                  sibling.raveWins += 1.0;
-                } else if (result === 0) {
+                // 使用与上面相同的胜负判断逻辑
+                if (result === 0) {
                   sibling.raveWins += 0.5;
+                } else if (moveInfo.player === result) {
+                  sibling.raveWins += 1.0;
+                } else {
+                  sibling.raveWins += 0.0;
                 }
                 break;
               }
