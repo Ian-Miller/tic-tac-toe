@@ -1,0 +1,2635 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>井字棋</title>
+<style>
+  :root {
+    --primary-color: #4A6FFF;
+    --secondary-color: #6E56CF;
+    --background-color: #f4f7ff;
+    --text-color: #2d3748;
+    --border-color: #e2e8f0;
+    --accent-color: #5e35b1;
+    --success-color: #48bb78;
+    --error-color: #f56565;
+    --card-bg: #ffffff;
+    --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', 
+                 'Hiragino Sans GB', '微软雅黑', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-game: 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', -apple-system, 
+                 BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  body {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: var(--font-main);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    background-image: linear-gradient(135deg, rgba(74, 111, 255, 0.05) 0%, rgba(110, 86, 207, 0.05) 100%);
+    min-height: 100vh;
+  }
+
+  @media (min-width: 768px) {
+    body {
+      max-width: 800px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    body {
+      padding: 10px;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      margin-top: 15px;
+      margin-bottom: 10px;
+    }
+    
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+    }
+    
+    .game-container {
+      padding: 12px 15px;
+      margin: 10px auto 5px;
+    }
+    
+    table {
+      max-width: 280px;
+      margin: 5px auto;
+    }
+    
+    td > span {
+      font-size: min(50px, 18vw);
+    }
+    
+    .symbols-indicator {
+      margin: 2px 0;
+      padding: 5px 10px;
+    }
+    
+    .symbol-box:first-child,
+    .symbol-box:last-child {
+      margin: 0;
+    }
+    
+    .loading-indicator {
+      position: relative;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .difficulty-selector {
+      margin-top: 2px;
+      gap: 5px;
+    }
+    
+    .intro-toggle {
+      margin: 8px auto;
+    }
+    
+    .difficulty-btn {
+      padding: 4px 8px;
+      font-size: 0.85rem;
+    }
+    
+    .restart-btn, .ai-first-btn {
+      padding: 8px 16px;
+      font-size: 0.95rem;
+      min-width: 110px;
+    }
+    
+    .game-status-area {
+      height: 50px;
+      margin: 5px 0;
+    }
+    
+    .game-status {
+      font-size: 1.5rem;
+      padding: 5px 15px;
+    }
+  }
+
+  @media (max-width: 360px) {
+    h1 {
+      font-size: 1.8rem;
+    }
+    
+    table {
+      max-width: 240px;
+      margin: 15px 0;
+    }
+    
+    .difficulty-selector {
+      gap: 5px;
+    }
+    
+    .difficulty-btn {
+      padding: 4px 8px;
+      font-size: 0.8rem;
+    }
+    
+    .button-container {
+      gap: 10px;
+    }
+    
+    .restart-btn, .ai-first-btn {
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      min-width: 100px;
+    }
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-align: center;
+    margin-top: 30px;
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    animation: fadeIn 0.7s ease-out;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--secondary-color);
+    margin-bottom: 10px;
+  }
+
+  .game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px auto;
+    padding: 20px 30px;
+    position: relative;
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    max-width: 100%;
+    transform: translateZ(0);
+    animation: scaleIn 0.5s ease-out;
+  }
+
+  table {
+    width: 100%;
+    max-width: 320px;
+    border-collapse: collapse;
+    margin: 15px auto;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.07);
+    animation: fadeIn 0.5s ease-out 0.2s forwards;
+    opacity: 0;
+    animation-fill-mode: forwards;
+    position: relative;
+    left: 0;
+  }
+
+  td {
+    width: 33.33%;
+    height: 0;
+    padding-bottom: 33.33%;
+    position: relative;
+    border: 3px solid var(--background-color);
+    background-color: var(--card-bg);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  td > span {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: min(60px, 15vw);
+    font-family: var(--font-game);
+    font-weight: 600;
+    color: var(--primary-color);
+  }
+
+  td:not(.game-over):hover {
+    background-color: rgba(74, 111, 255, 0.1);
+    transform: scale(0.97);
+    cursor: pointer;
+  }
+
+  .game-over td {
+    cursor: not-allowed;
+    opacity: 0.9;
+  }
+
+  .loading-indicator {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(74, 111, 255, 0.2);
+    border-top: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    background-color: var(--card-bg);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    margin: 0 auto;
+  }
+
+  .timer-container {
+    animation: timer-anti-spin 1s linear infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--card-bg);
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    z-index: 11;
+  }
+
+  #timerDisplay {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    z-index: 12;
+    transition: font-size 0.2s ease;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  @keyframes timer-anti-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(-360deg); }
+  }
+
+  .loading-overlay {
+    display: none;
+  }
+
+  .button-container {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 12px;
+    width: 100%;
+  }
+
+  .restart-btn, .ai-first-btn {
+    padding: 14px 28px;
+    font-size: 1.1rem;
+    font-family: var(--font-main);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 140px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .restart-btn {
+    background-color: var(--primary-color);
+    color: white;
+  }
+
+  .ai-first-btn {
+    background-color: var(--secondary-color);
+    color: white;
+  }
+
+  .restart-btn:hover, .ai-first-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 14px rgba(0, 0, 0, 0.15);
+  }
+
+  .restart-btn:active, .ai-first-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .game-status-area {
+    width: 100%;
+    height: 60px; /* 固定高度，适应游戏状态和加载指示器 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin: 8px 0;
+    background-color: rgba(255, 255, 255, 0.5); /* 添加背景色，确保即使内容为空也可见 */
+    border-radius: 8px;
+  }
+
+  .game-status {
+    font-family: var(--font-game);
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.2px;
+    width: 100%;
+    height: 100%;
+    color: var(--accent-color);
+    text-align: center;
+    padding: 8px 20px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .status-row {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .game-status:empty {
+    opacity: 0; /* 使用透明度而不是display:none，保持占位 */
+    pointer-events: none; /* 禁用空状态的鼠标事件 */
+  }
+
+  .intro-section {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--card-bg);
+    border-radius: 16px;
+    margin: 10px 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    opacity: 0;
+  }
+
+  .intro-section.expanded {
+    max-height: 500px;
+    padding: 25px;
+    margin: 25px 0;
+    opacity: 1;
+  }
+
+  .intro-toggle {
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    font-size: 1rem;
+    font-family: var(--font-main);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 15px auto;
+    border: none;
+    border-radius: 30px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .intro-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+  }
+
+  .intro-toggle svg {
+    transition: transform 0.3s ease;
+  }
+
+  .intro-toggle.expanded svg {
+    transform: rotate(180deg);
+  }
+
+  .lang-drawer {
+    position: fixed;
+    left: -320px; /* 增大宽度，容纳介绍内容 */
+    top: 0;
+    width: 320px; /* 增大宽度 */
+    height: 100%;
+    background: var(--card-bg);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    padding: 25px;
+    box-sizing: border-box;
+    border-radius: 0 16px 16px 0;
+    overflow-y: auto; /* 添加滚动 */
+    scrollbar-gutter: stable; /* 预留滚动条空间，防止内容跳动 */
+  }
+
+  .lang-drawer h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+    margin: 0 0 15px 0;
+  }
+
+  .drawer-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 20px 0;
+    width: 100%;
+  }
+
+  /* 修改语言选项区域，使其可点击 */
+  .lang-options {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 60px; /* 足够显示一个选项并有更多空间 */
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    position: relative;
+    cursor: pointer; /* 整个区域变为可点击 */
+  }
+
+  .lang-options:not(.expanded)::after {
+    content: '';
+    position: absolute;
+    top: 0; /* 从顶部开始 */
+    left: 0;
+    width: 100%;
+    height: 100%; /* 覆盖整个区域 */
+    background: linear-gradient(to bottom, 
+      rgba(255, 255, 255, 0) 0%, 
+      rgba(255, 255, 255, 0.4) 30%,
+      var(--card-bg) 90%);
+    pointer-events: none;
+  }
+
+  .lang-options.expanded {
+    max-height: 300px; /* 足够容纳所有语言选项 */
+    padding-bottom: 0;
+  }
+
+  .lang-options.expanded::after {
+    display: none;
+  }
+
+  .game-intro {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .game-intro p, .game-intro li {
+    margin-bottom: 10px;
+  }
+
+  .game-intro ol {
+    padding-left: 20px;
+  }
+
+  /* 修改语言按钮样式 */
+  .lang-toggle span {
+    font-size: 1rem;
+  }
+
+  /* 删除不再需要的样式 */
+  /* .intro-section, .intro-toggle 相关样式可以删除 */
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes scaleIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* 添加难度选择器样式 */
+  .difficulty-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    justify-content: center;
+  }
+
+  .difficulty-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .difficulty-btn.active {
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-color: transparent;
+  }
+
+  .game-board-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin: 10px 0 5px 0;
+  }
+
+  .symbols-indicator {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 30px;
+    padding: 8px 15px;
+    margin: 8px 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: static;
+    transform: none;
+    width: auto;
+  }
+
+  .symbol-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .symbol-box:first-child,
+  .symbol-box:last-child {
+    margin: 0;
+  }
+
+  .symbol-box span:last-child {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-family: var(--font-game);
+    padding: 0 5px;
+  }
+
+  /* 移除移动端的特殊样式，使用统一的水平布局 */
+  @media (max-width: 768px) {
+    .symbols-indicator {
+      flex-direction: row;
+      margin: 15px 0;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .symbols-indicator {
+      width: 100%;
+      gap: 15px;  /* 在小屏幕上减小间距 */
+    }
+  }
+
+  /* 更新状态区域布局 */
+  .game-status:empty {
+    display: none; /* 如果没有内容则不占用空间 */
+  }
+
+  /* 调整移动端的布局 */
+  @media (max-width: 768px) {
+    .difficulty-selector {
+      margin-top: 2px;
+    }
+    
+    .game-status {
+      margin: 3px 0 0 0;
+      padding: 3px 15px;
+    }
+    
+    .symbols-indicator {
+      margin: 2px 0;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .game-container {
+      padding: 12px 15px;
+      margin: 10px auto 5px;
+    }
+    
+    h2 {
+      margin-bottom: 5px;
+    }
+    
+    .game-board-wrapper {
+      margin: 5px 0 3px 0;
+    }
+    
+    table {
+      margin: 5px auto;
+    }
+    
+    .button-container {
+      margin-top: 5px;
+    }
+  }
+
+  /* 恢复必要的样式 */
+  .lang-drawer.open {
+    left: 0;
+  }
+
+  .lang-toggle {
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    padding: 10px 14px;
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lang-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+  }
+
+  .lang-option {
+    display: block;
+    width: 100%;
+    padding: 12px 15px;
+    margin: 5px 0;
+    border: none;
+    background: none;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 8px;
+    font-size: 1.1rem;
+  }
+
+  .lang-option:hover {
+    background-color: rgba(74, 111, 255, 0.1);
+  }
+
+  .lang-option.active {
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  /* 添加语言折叠相关的样式 */
+  .lang-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px 5px; /* 增加内边距 */
+    transition: all 0.3s ease;
+    border-radius: 8px; /* 添加圆角 */
+    background-color: rgba(74, 111, 255, 0.05); /* 添加轻微背景色 */
+    position: relative;
+    z-index: 10; /* 确保点击事件能被捕获 */
+  }
+
+  .lang-header h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+    margin: 0;
+  }
+
+  .lang-header:hover {
+    opacity: 0.8;
+  }
+
+  .arrow-icon {
+    transition: transform 0.3s ease;
+    color: var(--primary-color); /* 使用主色调 */
+    margin-right: 5px; /* 添加右边距 */
+  }
+
+  .arrow-icon svg {
+    width: 24px; /* 再放大一些 */
+    height: 24px; /* 再放大一些 */
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1)); /* 添加轻微阴影 */
+  }
+
+  .arrow-icon.expanded {
+    transform: rotate(180deg);
+  }
+
+  /* 为侧边栏打开时添加背景阴影 */
+  .lang-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0);
+    transition: background-color 0.4s ease;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  .lang-drawer-overlay.visible {
+    background-color: rgba(0, 0, 0, 0.4);
+    pointer-events: auto;
+  }
+  
+  /* 添加难度选择器禁用样式 */
+  .difficulty-selector.disabled {
+    opacity: 0.8;
+    position: relative;
+  }
+  
+  /* 添加战绩显示样式 */
+  .stats-container {
+    width: 100%;
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    animation: fadeIn 0.8s ease-out;
+  }
+  
+  .stats-container h3 {
+    font-size: 1.4rem;
+    color: var(--primary-color);
+    text-align: center;
+    margin: 0 0 15px 0;
+    font-weight: 600;
+  }
+  
+  .difficulty-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: space-around;
+  }
+  
+  .diff-stat {
+    padding: 12px 15px;
+    border-radius: 10px;
+    background: var(--card-bg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    min-width: 120px;
+    transition: all 0.3s ease;
+    border-top: 3px solid;
+  }
+  
+  .diff-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .diff-stat.easy {
+    border-color: #48bb78;
+  }
+  
+  .diff-stat.medium {
+    border-color: #4299e1;
+  }
+  
+  .diff-stat.hard {
+    border-color: #e53e3e;
+  }
+  
+  .diff-stat h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    text-align: center;
+    color: var(--secondary-color);
+  }
+  
+  .diff-stat p {
+    margin: 5px 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.95rem;
+  }
+  
+  @media (max-width: 768px) {
+    .difficulty-stats {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .diff-stat {
+      width: 100%;
+      max-width: 300px;
+    }
+  }
+
+  /* 添加自定义滚动条样式 */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(230, 235, 255, 0.6);
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(74, 111, 255, 0.3);
+    border-radius: 5px;
+    transition: background 0.3s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 111, 255, 0.5);
+  }
+
+  /* 对Firefox浏览器的支持 */
+  * {
+    scrollbar-color: rgba(74, 111, 255, 0.3) rgba(230, 235, 255, 0.6);
+    scrollbar-width: thin;
+  }
+
+  /* 新增：添加彩虹文字效果 */
+  .rainbow-text {
+    animation: rainbow 3s linear infinite;
+    font-weight: bold;
+    background: none !important;
+    -webkit-background-clip: initial !important;
+    -webkit-text-fill-color: initial !important;
+  }
+
+  @keyframes rainbow {
+    0% { color: #ff0000; }
+    14% { color: #ff7f00; }
+    28% { color: #ffff00; }
+    42% { color: #00ff00; }
+    57% { color: #0000ff; }
+    71% { color: #4b0082; }
+    85% { color: #9400d3; }
+    100% { color: #ff0000; }
+  }
+
+  /* 游戏控制按钮容器 */
+  .game-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 15px 0;
+    width: 100%;
+  }
+
+  /* 保持原有按钮样式不变 */
+  .restart-btn, .ai-first-btn {
+    padding: 8px 16px;
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  /* 战绩容器样式 */
+  .stats-container {
+    width: 100%;
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  /* 重置按钮样式调整 */
+  .reset-btn {
+    display: block;
+    width: fit-content; /* 根据内容自适应宽度 */
+    margin: 15px auto 0; /* 只在顶部有外边距，水平居中 */
+    padding: 6px 12px;
+    /* 其他样式保持不变 */
+  }
+
+  /* 移动端适配 */
+  @media (max-width: 768px) {
+    .game-controls {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .restart-btn, .ai-first-btn {
+        width: 80%;
+        max-width: 200px;
+    }
+    
+    .reset-btn {
+        margin: 10px auto;
+    }
+  }
+
+  /* 添加全局布局保护 */
+  .game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* 确保表格和按钮居中 */
+  table {
+    margin: 0 auto;
+  }
+
+  .symbols-indicator {
+    margin: 10px auto;
+  }
+
+  .difficulty-selector span[data-lang="difficulty"]::after {
+    content: "："; /* 使用CSS添加冒号 */
+    margin-right: 4px;
+  }
+
+  .hint-btn {
+    padding: 14px 28px;
+    font-size: 1.1rem;
+    font-family: var(--font-main);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 140px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #5e35b1;
+    color: white;
+  }
+
+  .hint-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 14px rgba(0, 0, 0, 0.15);
+  }
+
+  .hint-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+  }
+</style>
+</head>
+<body>
+<h1 data-lang="title">井字棋</h1>
+<button class="lang-toggle" onclick="toggleLangDrawer()">
+  <span data-lang="langInfo">说</span>
+</button>
+<div class="lang-drawer-overlay" id="langOverlay" onclick="toggleLangDrawer()"></div>
+<div class="lang-drawer" id="langDrawer">
+  <div class="lang-header" onclick="toggleLangOptions()">
+    <h3 data-lang="language">语言</h3>
+    <div class="arrow-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M7 10l5 5 5-5z"/>
+      </svg>
+    </div>
+  </div>
+  
+  <div class="lang-options" id="langOptions">
+  <button class="lang-option active" onclick="switchLang('zh')">中文</button>
+  <button class="lang-option" onclick="switchLang('en')">English</button>
+  <button class="lang-option" onclick="switchLang('ja')">日本語</button>
+  <button class="lang-option" onclick="switchLang('ko')">한국어</button>
+  <button class="lang-option" onclick="switchLang('ru')">Русский</button>
+  <button class="lang-option" onclick="switchLang('fr')">Français</button>
+  </div>
+  
+  <div class="drawer-divider"></div>
+  
+  <div class="game-intro">
+    <h3 data-lang="gameIntroTitle">游戏介绍</h3>
+  <p data-lang="intro">井字棋是一种两人对弈的游戏，游戏盘是一个3x3的方格，两人轮流在空格中画上自己的符号，当有一方连成一条线时，该方获胜。</p>
+    <p data-lang="rulesTitle">游戏规则：</p>
+    <ol>
+      <li data-lang="rule1">游戏盘是一个3x3的方格。</li>
+      <li data-lang="rule2">两人轮流在空格中画上自己的符号。</li>
+      <li data-lang="rule3">当有一方连成一条线时，该方获胜。</li>
+      <li data-lang="rule4">当所有空格都被画满时，游戏结束。</li>
+  </ol>
+</div>
+</div>
+<div class="game-container">
+    <div class="game-board-wrapper">
+    <table>
+        <tr>
+            <td id="0" onclick="select(this)"></td>
+            <td id="1" onclick="select(this)"></td>
+            <td id="2" onclick="select(this)"></td>
+        </tr>
+        <tr>
+            <td id="3" onclick="select(this)"></td>
+            <td id="4" onclick="select(this)"></td>
+            <td id="5" onclick="select(this)"></td>
+        </tr>
+        <tr>
+            <td id="6" onclick="select(this)"></td>
+            <td id="7" onclick="select(this)"></td>
+            <td id="8" onclick="select(this)"></td>
+        </tr>
+    </table>
+    </div>
+    <div class="symbols-indicator">
+      <div class="symbol-box">
+        <span data-lang="ai">AI</span>: <span id="aiSymbol">O</span>
+      </div>
+      <div class="symbol-box">
+        <span data-lang="player">玩家</span>: <span id="playerSymbol">X</span>
+      </div>
+    </div>
+    <div class="game-status-area">
+    <div id="gameStatus" class="game-status"></div>
+      <div class="status-row">
+        <div id="loadingIndicator" class="loading-indicator">
+          <div class="timer-container">
+            <span id="timerDisplay">0</span>
+    </div>
+</div>
+      </div>
+    </div>
+    <div class="difficulty-selector">
+    <span data-lang="difficulty">难度</span>
+    <button class="difficulty-btn" data-difficulty="easy" data-iterations="1000" onclick="setDifficulty(this)">
+        <span data-lang="easy">简单</span>
+    </button>
+    <button class="difficulty-btn active" data-difficulty="medium" data-iterations="10000" onclick="setDifficulty(this)">
+        <span data-lang="medium">中等</span>
+    </button>
+    <button class="difficulty-btn" data-difficulty="hard" data-iterations="100000" onclick="setDifficulty(this)">
+        <span data-lang="hard">困难</span>
+    </button>
+</div>
+    <div class="game-controls">
+        <button class="restart-btn" onclick="restart()" data-lang="restart">重新开始</button>
+        <button class="ai-first-btn" onclick="aiFirst()" data-lang="aiFirst">AI先手</button>
+        <button class="hint-btn" onclick="getHint()" data-lang="hint">提示</button>
+    </div>
+    
+    <div class="stats-container">
+        <h3 data-lang="stats">战绩</h3>
+        <div class="difficulty-stats">
+            <div class="diff-stat easy">
+                <h4 data-lang="easy">简单</h4>
+                <p><span data-lang="wins">胜：</span><span id="easy-wins">0</span></p>
+                <p><span data-lang="losses">负：</span><span id="easy-losses">0</span></p>
+                <p><span data-lang="draws">平：</span><span id="easy-draws">0</span></p>
+                <p><span data-lang="winRate">胜率：</span><span id="easy-winrate">0%</span></p>
+                <p><span data-lang="pureWinRate">纯胜率：</span><span id="easy-pure-winrate">0%</span></p>
+</div>
+            <div class="diff-stat medium">
+                <h4 data-lang="medium">中等</h4>
+                <p><span data-lang="wins">胜：</span><span id="medium-wins">0</span></p>
+                <p><span data-lang="losses">负：</span><span id="medium-losses">0</span></p>
+                <p><span data-lang="draws">平：</span><span id="medium-draws">0</span></p>
+                <p><span data-lang="winRate">胜率：</span><span id="medium-winrate">0%</span></p>
+                <p><span data-lang="pureWinRate">纯胜率：</span><span id="medium-pure-winrate">0%</span></p>
+            </div>
+            <div class="diff-stat hard">
+                <h4 data-lang="hard">困难</h4>
+                <p><span data-lang="wins">胜：</span><span id="hard-wins">0</span></p>
+                <p><span data-lang="losses">负：</span><span id="hard-losses">0</span></p>
+                <p><span data-lang="draws">平：</span><span id="hard-draws">0</span></p>
+                <p><span data-lang="winRate">胜率：</span><span id="hard-winrate">0%</span></p>
+                <p><span data-lang="pureWinRate">纯胜率：</span><span id="hard-pure-winrate">0%</span></p>
+            </div>
+        </div>
+        <button class="reset-btn" onclick="resetStats()" data-lang="resetStats">重置战绩</button>
+    </div>
+</div>
+<div id="loadingOverlay" class="loading-overlay"></div>
+<script>
+const translations = {
+  zh: {
+    langInfo: '说',
+    langTitle: '语言',
+    language: '语言',
+    title: '井字棋',
+    gameIntroTitle: '游戏介绍',
+    intro: '井字棋是一种两人对弈的游戏，游戏盘是一个3x3的方格，两人轮流在空格中画上自己的符号，当有一方连成一条线时，该方获胜。',
+    rulesTitle: '游戏规则：',
+    rule1: '游戏盘是一个3x3的方格。',
+    rule2: '两人轮流在空格中画上自己的符号。',
+    rule3: '当有一方连成一条线时，该方获胜。',
+    rule4: '当所有空格都被画满时，游戏结束。',
+    restart: '重新开始',
+    aiFirst: 'AI先手',
+    aiWin: 'AI胜利！',
+    playerWin: '玩家胜利！',
+    draw: '平局！',
+    difficulty: '难度',
+    difficultyLocked: '当前难度：',
+    easy: '简单',
+    medium: '中等',
+    hard: '困难',
+    player: '玩家',
+    ai: 'AI',
+    stats: '战绩',
+    wins: '胜：',
+    losses: '负：',
+    draws: '平：',
+    winRate: '胜率：',
+    pureWinRate: '纯胜率：',
+    resetStats: '重置战绩',
+    resetting: '重置中...',
+    confirmReset: '确定要重置所有战绩数据吗？',
+    resetComplete: '已重置！',
+    hint: "提示"
+  },
+  en: {
+    langInfo: 'Info',
+    langTitle: 'Language',
+    language: 'Language',
+    title: 'Tic Tac Toe',
+    gameIntroTitle: 'Game Introduction',
+    intro: 'Tic Tac Toe is a game for two players played on a 3x3 grid where players take turns marking the spaces with their symbols. The first one to align three symbols wins.',
+    rulesTitle: 'Game Rules:',
+    rule1: 'The game board is a 3x3 grid.',
+    rule2: 'Players take turns marking an empty cell.',
+    rule3: 'The first to align three symbols wins.',
+    rule4: 'The game ends when all cells are filled.',
+    restart: 'Restart',
+    aiFirst: 'AI First',
+    aiWin: 'AI Wins!',
+    playerWin: 'Player Wins!',
+    draw: 'Draw!',
+    difficulty: 'Difficulty',
+    difficultyLocked: 'Current difficulty:',
+    easy: 'Easy',
+    medium: 'Medium',
+    hard: 'Hard',
+    player: 'Player',
+    ai: 'AI',
+    stats: 'Stats',
+    wins: 'Wins:',
+    losses: 'Losses:',
+    draws: 'Draws:',
+    winRate: 'Win Rate:',
+    pureWinRate: 'Pure Win Rate:',
+    resetStats: 'Reset Stats',
+    resetting: 'Resetting...',
+    confirmReset: 'Are you sure you want to reset all stats?',
+    resetComplete: 'Reset Complete!',
+    hint: "Hint"
+  },
+  ja: {
+    langInfo: '説',
+    langTitle: '言語',
+    language: '言語',
+    title: '三目並べ',
+    gameIntroTitle: 'ゲーム紹介',
+    intro: '三目並べは、3x3のグリッド上で2人のプレイヤーが交互に印をつけ、先に3つ並べた方が勝利するゲームです。',
+    rulesTitle: 'ゲームのルール：',
+    rule1: 'ゲーム盤は3x3のグリッドです。',
+    rule2: 'プレイヤーは空いているマスに順番に印をつけます。',
+    rule3: '先に3つ並べた方が勝ちです。',
+    rule4: 'すべてのマスが埋まったらゲーム終了です。',
+    restart: 'リスタート',
+    aiFirst: 'AI先手',
+    aiWin: 'AIの勝ち！',
+    playerWin: 'プレイヤーの勝ち！',
+    draw: '引き分け！',
+    difficulty: '難易度：',
+    difficultyLocked: '現在の難易度：',
+    easy: '簡単',
+    medium: '普通',
+    hard: '難しい',
+    player: 'プレイヤー',
+    ai: 'AI',
+    stats: '戦績',
+    wins: '勝ち：',
+    losses: '負け：',
+    draws: '引き分け：',
+    winRate: '勝率：',
+    pureWinRate: '純勝率：',
+    resetStats: '戦績リセット',
+    resetting: 'リセット中...',
+    confirmReset: '本当にすべての戦績をリセットしますか？',
+    resetComplete: 'リセット完了！',
+    hint: "ヒント"
+  },
+  ko: {
+    langInfo: '설',
+    langTitle: '언어',
+    language: '언어',
+    title: '틱택토',
+    gameIntroTitle: '게임 소개',
+    intro: '틱택토는 3x3 격자판에서 두 플레이어가 번갈아 가며 자신의 기호를 표시하는 게임으로, 먼저 세 개를 일렬로 나열한 플레이어가 승리합니다.',
+    rulesTitle: '게임 규칙:',
+    rule1: '게임판은 3x3 격자입니다.',
+    rule2: '플레이어는 빈 칸에 번갈아 표시합니다.',
+    rule3: '먼저 세 개를 일렬로 나열한 플레이어가 승리합니다.',
+    rule4: '모든 칸이 채워지면 게임이 종료됩니다.',
+    restart: '다시 시작',
+    aiFirst: 'AI 선공',
+    aiWin: 'AI 승리!',
+    playerWin: '플레이어 승리!',
+    draw: '무승부!',
+    difficulty: '난이도:',
+    difficultyLocked: '현재 난이도:',
+    easy: '쉬움',
+    medium: '보통',
+    hard: '어려움',
+    player: '플레이어',
+    ai: 'AI',
+    stats: '전적',
+    wins: '승:',
+    losses: '패:',
+    draws: '무승부:',
+    winRate: '승률:',
+    pureWinRate: '순 승률:',
+    resetStats: '전적 초기화',
+    resetting: '리셋중...',
+    confirmReset: '정말로 모든 전적을 초기화하시겠습니까?',
+    resetComplete: '리셋 완료!',
+    hint: "힌트"
+  },
+  ru: {
+    langInfo: 'Инф',
+    langTitle: 'Язык',
+    language: 'Язык',
+    title: 'Крестики-нолики',
+    gameIntroTitle: 'Об игре',
+    intro: 'Крестики-нолики — это игра для двух игроков на поле 3x3, где игроки по очереди ставят свои символы, и победителем считается тот, кто первым выстроит линию из трех одинаковых символов.',
+    rulesTitle: 'Правила игры:',
+    rule1: 'Игровое поле 3x3.',
+    rule2: 'Игроки по очереди занимают свободные клетки.',
+    rule3: 'Побеждает тот, кто первым выстроит линию из трёх символов.',
+    rule4: 'Игра заканчивается, когда все клетки заполнены.',
+    restart: 'Перезапуск',
+    aiFirst: 'ИИ первый',
+    aiWin: 'ИИ выиграл!',
+    playerWin: 'Игрок выиграл!',
+    draw: 'Ничья!',
+    difficulty: 'Сложность:',
+    difficultyLocked: 'Текущая сложность:',
+    easy: 'Легко',
+    medium: 'Средне',
+    hard: 'Сложно',
+    player: 'Игрок',
+    ai: 'ИИ',
+    stats: 'Статистика',
+    wins: 'Победы:',
+    losses: 'Поражения:',
+    draws: 'Ничьи:',
+    winRate: 'Процент побед:',
+    pureWinRate: 'Чистый процент побед:',
+    resetStats: 'Сбросить статистику',
+    resetting: 'Перезапуск...',
+    confirmReset: 'Вы уверены, что хотите сбросить все статистические данные?',
+    resetComplete: 'Статистика сброшена!',
+    hint: "Подсказка"
+  },
+  fr: {
+    langInfo: 'Info',
+    langTitle: 'Langue',
+    language: 'Langue',
+    title: 'Morpion',
+    gameIntroTitle: 'Présentation du jeu',
+    intro: 'Le Morpion est un jeu pour deux joueurs joué sur une grille 3x3, où les joueurs marquent alternativement les cases avec leur symbole. Le premier à aligner trois symboles gagne.',
+    rulesTitle: 'Règles du jeu :',
+    rule1: 'Le plateau est une grille 3x3.',
+    rule2: 'Les joueurs marquent tour à tour une case vide.',
+    rule3: 'Le premier à aligner trois symboles remporte la partie.',
+    rule4: 'La partie se termine lorsque toutes les cases sont remplies.',
+    restart: 'Recommencer',
+    aiFirst: 'IA commence',
+    aiWin: 'IA gagne !',
+    playerWin: 'Joueur gagne !',
+    draw: 'Égalité !',
+    difficulty: 'Difficulté:',
+    difficultyLocked: 'Difficulté actuelle:',
+    easy: 'Facile',
+    medium: 'Moyenne',
+    hard: 'Difficile',
+    player: 'Joueur',
+    ai: 'IA',
+    stats: 'Statistiques',
+    wins: 'Victoires:',
+    losses: 'Défaites:',
+    draws: 'Nuls:',
+    winRate: 'Taux de victoire:',
+    pureWinRate: 'Taux de victoire pur:',
+    resetStats: 'Réinitialiser les statistiques',
+    resetting: 'Réinitialisation...',
+    confirmReset: 'Êtes-vous sûr de vouloir réinitialiser toutes les statistiques ?',
+    resetComplete: 'Statistiques réinitialisées !',
+    hint: "Indice"
+  }
+};
+
+let currentLang = 'zh';
+
+function toggleLangDrawer() {
+  const langDrawer = document.getElementById('langDrawer');
+  const langOverlay = document.getElementById('langOverlay');
+  const langOptions = document.getElementById('langOptions');
+  const arrowIcon = document.querySelector('.arrow-icon');
+  
+  langDrawer.classList.toggle('open');
+  
+  // 添加/移除遮罩层可见性
+  if (langDrawer.classList.contains('open')) {
+    langOverlay.classList.add('visible');
+    document.body.style.overflow = 'hidden'; // 阻止背景滚动
+  } else {
+    langOverlay.classList.remove('visible');
+    document.body.style.overflow = ''; // 恢复背景滚动
+    
+    // 关闭侧边栏时，同时折叠语言选项
+    if (langOptions.classList.contains('expanded')) {
+      langOptions.classList.remove('expanded');
+      arrowIcon.classList.remove('expanded');
+      
+      // 确保当前语言选项在首位
+      const activeOption = document.querySelector('.lang-option.active');
+      if (activeOption) {
+        langOptions.insertBefore(activeOption, langOptions.firstChild);
+      }
+    }
+  }
+}
+
+function switchLang(lang) {
+  currentLang = lang;
+  // 更新所有可翻译元素
+  document.querySelectorAll('[data-lang]').forEach(el => {
+    const key = el.getAttribute('data-lang');
+    el.textContent = translations[lang][key];
+  });
+  
+  // 更新激活的语言按钮
+  document.querySelectorAll('.lang-option').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${lang}'`));
+  });
+  
+  // 确保当前选中的语言放在第一位
+  const activeOption = document.querySelector('.lang-option.active');
+  if (activeOption && !document.getElementById('langOptions').classList.contains('expanded')) {
+    const optionsContainer = document.getElementById('langOptions');
+    optionsContainer.insertBefore(activeOption, optionsContainer.firstChild);
+  }
+  
+  // 将用户选择的语言保存到localStorage中
+  localStorage.setItem('preferredLanguage', lang);
+  
+  // 刷新战绩显示中的文本
+  updateStatsDisplay();
+  
+  // 只有当游戏已开始且游戏结束时调用handleGameOver
+  if (gameState && gameState.gameOver() !== null) {
+    handleGameOver();
+  }
+}
+
+// Define maximum expansion depth for MCTS
+const MAX_EXPANSION_DEPTH = 7;
+
+// In MCTSNode, add a "depth" property to track node depth.
+class MCTSNode {
+  constructor(state, parent = null) {
+    this.state = state;
+    this.parent = parent;
+    this.children = [];
+    this.visits = 0;
+    this.wins = 0;
+    // Set depth: root is 0; others are parent's depth + 1.
+    this.depth = parent ? parent.depth + 1 : 0;
+  }
+
+  ucb(standpoint) {
+    if (this.visits === 0) return Infinity;
+    const exploitation = this.wins / this.visits;
+    const exploration = Math.sqrt(2 * Math.log(this.parent.visits) / this.visits);
+    return (this.state.movedPlayer === standpoint) ? 
+      exploitation + exploration : (1-exploitation) + exploration;
+  }
+
+  expandAll() {
+    const actions = this.state.getLegalActions();
+    for (const action of actions) {
+      const newState = this.state.makeMove(action);
+      this.children.push(new MCTSNode(newState, this));
+    }
+  }
+  
+  isExpanded() {
+    return this.children.length === this.state.getLegalActionsLength();
+  }
+}
+
+// Modify the expansion portion in iterate() to respect MAX_EXPANSION_DEPTH.
+class MCTS {
+  constructor(state, currentPlayer, iterations, maxDepth) {
+    this.root = new MCTSNode(state);
+    this.currentPlayer = currentPlayer;
+    this.iterations = iterations;
+    this.maxDepth = maxDepth;  // 添加最大深度参数
+  }
+  
+  iterate() {
+    if (!this.root.isExpanded() && this.root.depth < this.maxDepth) {  // 使用this.maxDepth
+      this.root.expandAll();
+    }
+    let node = this.root;
+    while (node.isExpanded() && node.children.length > 0 && node.depth < this.maxDepth) {  // 添加深度检查
+      const urgentMove = node.state.checkUrgentMove(node.state.currentPlayer);
+      if (urgentMove !== null) {
+        node = node.children.find(child => child.state.lastMove === urgentMove);
+        continue;
+      }
+      let bestChild = null;
+      let bestScore = -Infinity;
+      for (const child of node.children) {
+        const score = child.ucb(this.currentPlayer);
+        if (score > bestScore) {
+          bestScore = score;
+          bestChild = child;
+        }
+      }
+      node = bestChild;
+    }
+    
+    // Only expand if depth is below maximum
+    if (node.depth < this.maxDepth && !node.isExpanded()) {  // 使用this.maxDepth
+      node.expandAll();
+      if (node.children.length > 0) {
+        const urgentMove = node.state.checkUrgentMove(node.state.currentPlayer);
+        if (urgentMove !== null) {
+          node = node.children.find(child => child.state.lastMove === urgentMove);
+        } else {
+          node = node.children[Math.floor(Math.random() * node.children.length)];
+        }
+      }
+    }
+    
+    let state = node.state;
+    while (state.gameOver() === null) {
+      const urgentMove = state.checkUrgentMove(state.currentPlayer);
+      if (urgentMove !== null) {
+        state = state.makeMove(urgentMove);
+        continue;
+      }
+      const actions = state.getLegalActions();
+      const move = actions[Math.floor(Math.random() * actions.length)];
+      state = state.makeMove(move);
+    }
+    
+    let result = state.gameOver();
+    while (node !== null) {
+      node.visits++;
+      if (result === 0) {
+        node.wins += 0.5;
+      } else if (result === this.currentPlayer) {
+        node.wins += 1;
+      }
+      node = node.parent;
+    }
+  }
+  
+  getBestMove() {
+    const urgentMove = this.root.state.checkUrgentMove(this.currentPlayer);
+    if (urgentMove !== null) return urgentMove;
+    
+    // 使用this.iterations而不是直接使用iterations
+    for (let i = 0; i < this.iterations; i++) {
+      this.iterate();
+    }
+    let bestChild = null;
+    let bestScore = -Infinity;
+    for (const child of this.root.children) {
+      const winRate = child.wins / (child.visits + Number.EPSILON);
+      if (winRate > bestScore) {
+        bestScore = winRate;
+        bestChild = child;
+      }
+    }
+    return bestChild.state.lastMove;
+  }
+}
+
+// 全局变量
+let currentDifficulty = 'medium'; // 默认中等难度
+const difficultyMap = {
+    easy: { iterations: 1000, maxDepth: 5 },  // 提高简单难度的深度
+    medium: { iterations: 10000, maxDepth: 7 }, 
+    hard: { iterations: 100000, maxDepth: 9 }
+};
+
+// 重设难度设置函数
+function setDifficulty(btn) {
+    // 如果游戏已经开始且还没结束，不允许更改难度
+    if (gameStarted && gameState.gameOver() === null) return;
+    
+    const newDifficulty = btn.getAttribute('data-difficulty');
+    
+    // 如果点击的是当前已选中的难度按钮，不做任何操作
+    if (newDifficulty === currentDifficulty) return;
+    
+    // 移除所有按钮的active类
+    document.querySelectorAll('.difficulty-btn').forEach(b => {
+        b.classList.remove('active');
+    });
+    
+    // 设置当前按钮为active
+    btn.classList.add('active');
+    
+    // 更新当前难度和迭代次数
+    currentDifficulty = newDifficulty;
+    aiIterations = difficultyMap[newDifficulty].iterations;
+    
+    // 如果游戏已经结束，则重启游戏
+    if (gameState.gameOver() !== null) {
+        restart();
+    }
+}
+
+// 增强handleGameOver函数
+function handleGameOver() {
+    console.log('游戏结束，当前难度:', currentDifficulty); // 调试
+    
+    const result = gameState.gameOver();
+    const statusDiv = document.getElementById('gameStatus');
+    document.querySelector('table').classList.add('game-over');
+    
+    // 调试：打印当前统计数据
+    console.log('更新前战绩:', JSON.parse(JSON.stringify(userStats)));
+    
+    if (result === aiSymbol) {
+        statusDiv.textContent = translations[currentLang].aiWin;
+        userStats[currentDifficulty].losses++;
+    } else if (result === (aiSymbol === 'X' ? 'O' : 'X')) {
+        statusDiv.textContent = translations[currentLang].playerWin;
+        userStats[currentDifficulty].wins++;
+    } else {
+        statusDiv.textContent = translations[currentLang].draw;
+        userStats[currentDifficulty].draws++;
+    }
+    
+    // 调试：打印更新后统计数据
+    console.log('更新后战绩:', JSON.parse(JSON.stringify(userStats)));
+    
+    saveUserStats();
+    updateStatsDisplay();
+    document.getElementById('loadingIndicator').style.display = 'none';
+    gameStarted = false;
+    enableDifficultySelector();
+}
+
+// 加载用户战绩数据
+function loadUserStats() {
+  const savedStats = localStorage.getItem('tictactoeStats');
+  if (savedStats) {
+    userStats = JSON.parse(savedStats);
+  }
+}
+
+// 保存用户战绩数据
+function saveUserStats() {
+  localStorage.setItem('tictactoeStats', JSON.stringify(userStats));
+}
+
+// 计算胜率
+function calculateWinRate(stats) {
+  const total = stats.wins + stats.losses + stats.draws;
+  if (total === 0) return 0;
+  return (stats.wins / total * 100).toFixed(1);
+}
+
+// 计算纯胜率（不计算平局）
+function calculatePureWinRate(stats) {
+  const totalWithoutDraws = stats.wins + stats.losses;
+  if (totalWithoutDraws === 0) return 0;
+  return (stats.wins / totalWithoutDraws * 100).toFixed(1);
+}
+
+// 更新战绩显示
+function updateStatsDisplay() {
+  // 更新简单难度
+  updateStatElement('easy', userStats.easy);
+  // 更新中等难度
+  updateStatElement('medium', userStats.medium);
+  // 更新困难难度
+  updateStatElement('hard', userStats.hard);
+}
+
+// 新增：更新单个难度统计元素
+function updateStatElement(difficulty, stats) {
+  const winRate = calculateWinRate(stats);
+  const pureWinRate = calculatePureWinRate(stats);
+  
+  // 更新DOM元素
+  document.getElementById(`${difficulty}-wins`).textContent = stats.wins;
+  document.getElementById(`${difficulty}-losses`).textContent = stats.losses;
+  document.getElementById(`${difficulty}-draws`).textContent = stats.draws;
+  
+  const winRateElement = document.getElementById(`${difficulty}-winrate`);
+  const pureWinRateElement = document.getElementById(`${difficulty}-pure-winrate`);
+  
+  winRateElement.textContent = winRate + '%';
+  pureWinRateElement.textContent = pureWinRate + '%';
+
+  // 设置颜色效果
+  const winRateValue = parseFloat(winRate);
+  const pureWinRateValue = parseFloat(pureWinRate);
+  
+  // 移除之前的动画类
+  winRateElement.classList.remove('rainbow-text');
+  pureWinRateElement.classList.remove('rainbow-text');
+  
+  // 胜率阈值设为60%，纯胜率阈值设为70%
+  if (winRateValue >= 60) {
+    winRateElement.classList.add('rainbow-text');
+  }
+  if (pureWinRateValue >= 70) {
+    pureWinRateElement.classList.add('rainbow-text');
+  }
+}
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('h1').setAttribute('data-lang', 'title');
+    document.querySelector('.restart-btn').setAttribute('data-lang', 'restart');
+    document.querySelector('.ai-first-btn').setAttribute('data-lang', 'aiFirst');
+    
+    // 确保加载指示器一开始是隐藏的
+    document.getElementById('loadingIndicator').style.display = 'none';
+    
+    // 尝试从localStorage中获取保存的语言偏好
+    const savedLang = localStorage.getItem('preferredLanguage');
+    
+    // 加载用户战绩数据
+    loadUserStats();
+    
+    // 初始化战绩显示
+    updateStatsDisplay();
+    
+    // 初始化语言选项为折叠状态
+    const langOptions = document.getElementById('langOptions');
+    if (langOptions) {
+      langOptions.classList.remove('expanded');
+      
+      // 为整个语言选项区域添加点击事件
+      langOptions.addEventListener('click', function(e) {
+        // 如果点击的不是语言选项按钮，则切换展开/折叠状态
+        if (!e.target.classList.contains('lang-option')) {
+          toggleLangOptions();
+        }
+      });
+      
+      // 阻止语言选项按钮的点击事件冒泡
+      document.querySelectorAll('.lang-option').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+        });
+      });
+    }
+    
+    // 如果有保存的语言偏好，则使用它
+    if (savedLang && translations[savedLang]) {
+      switchLang(savedLang);
+    } else {
+      // 否则，尝试检测浏览器语言
+      const browserLang = detectBrowserLanguage();
+      switchLang(browserLang);
+    }
+    
+    // 确保当前语言选项在首位
+    const activeOption = document.querySelector('.lang-option.active');
+    if (activeOption && langOptions) {
+      langOptions.insertBefore(activeOption, langOptions.firstChild);
+    }
+    
+    // 停止可能已经启动的计时器
+    if (typeof stopTimer === 'function') {
+      stopTimer();
+    }
+    
+    // 检测是否为移动设备
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // 优化移动设备上的点击体验
+      document.querySelectorAll('td').forEach(cell => {
+        cell.addEventListener('touchstart', function() {
+          this.style.backgroundColor = 'rgba(74, 111, 255, 0.2)';
+        }, { passive: true });
+        
+        cell.addEventListener('touchend', function() {
+          this.style.backgroundColor = '';
+        }, { passive: true });
+      });
+      
+      // 在移动设备上优化按钮的触摸反馈
+      const allButtons = document.querySelectorAll('button');
+      allButtons.forEach(btn => {
+        btn.addEventListener('touchstart', function() {
+          this.style.transform = 'scale(0.97)';
+        }, { passive: true });
+        
+        btn.addEventListener('touchend', function() {
+          this.style.transform = '';
+        }, { passive: true });
+      });
+    }
+    
+    // 确保只有一个难度按钮是active状态
+    const defaultDifficulty = 'medium'; // 默认中等难度
+    currentDifficulty = defaultDifficulty;
+    
+    // 移除所有按钮的active类
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // 只为默认难度按钮添加active类
+    const defaultBtn = document.querySelector(`.difficulty-btn[data-difficulty="${defaultDifficulty}"]`);
+    if (defaultBtn) {
+        defaultBtn.classList.add('active');
+        aiIterations = parseInt(defaultBtn.getAttribute('data-iterations'));
+    }
+    updateHintButton();
+});
+
+/**
+ * @typedef {Object} MCTSNodeState
+ * @property {number[]} board - The game board state represented as an array
+ * @property {number} currentPlayer - The current player (1 or -1)
+ *
+ * Represents a node in the Monte Carlo Tree Search algorithm for Tic-Tac-Toe game.
+ * Each node contains information about the game state, statistics for the MCTS algorithm,
+ * and references to parent and child nodes.
+ * 
+ * @class
+ * @property {MCTSNodeState} state - The game state at this node
+ * @property {MCTSNode | null} parent - Reference to the parent node
+ * @property {MCTSNode[]} children - Array of child nodes
+ * @property {number} wins - Number of wins in simulations
+ * @property {number} visits - Number of visits/simulations performed
+ * @property {number[]} untriedActions - Array of untried moves at this node
+ */
+class State {
+    constructor(board=['','','','','','','','',''], currentPlayer) {
+        this.board = board.slice();
+        this.currentPlayer = currentPlayer; // 当前要行动的玩家
+        this.lastMove = -1;
+    }
+
+    canMove(move) {
+        return move >= 0 && this.board[move] === '';
+    }
+
+    makeMove(move) {
+        const newBoard = this.board.slice();
+        newBoard[move] = this.currentPlayer;
+        const nextPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
+        const newState = new State(newBoard, nextPlayer);
+        newState.lastMove = move;
+        newState.movedPlayer = this.currentPlayer;
+        return newState;
+    }
+
+    gameOver() {
+        const lines = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+        for (const [a, b, c] of lines) {
+            if (this.board[a] && this.board[a] === this.board[b] && this.board[a] === this.board[c]) {
+                return this.board[a];
+            }
+        }
+        return this.board.includes('') ? null : 0; // 0 for draw
+    }
+
+    getLegalActions() {
+        const actions = [];
+        for (let i = 0; i < this.board.length; i++) {
+            if (this.board[i] === '') {
+                actions.push(i);
+            }
+        }
+        return actions;
+    }
+
+    getLegalActionsLength() {
+        let count = 0;
+        for (let i = 0; i < this.board.length; i++) {
+            if (this.board[i] === '') count++;
+        }
+        return count;
+    }
+
+    // 添加检查紧急情况的方法
+    checkUrgentMove(player) {
+        const opponent = player === 'X' ? 'O' : 'X';
+        
+        // 1. 先检查自己的必胜着法
+        const winMove = this.findWinningMove(player);
+        if (winMove !== null) return winMove;
+        
+        // 2. 检查对手的必胜着法
+        const blockMove = this.findWinningMove(opponent);
+        if (blockMove !== null) return blockMove;
+        
+        // 3. 新增：检查双威胁情况
+        const forkMove = this.findForkMove(player);
+        if (forkMove !== null) return forkMove;
+        
+        // 4. 新增：阻止对手的双威胁
+        const blockFork = this.findForkMove(opponent);
+        if (blockFork !== null) return blockFork;
+        
+        return null;
+    }
+
+    // 新增方法：检测双威胁局面
+    findForkMove(player) {
+        const emptyCells = this.getLegalActions();
+        const forkMoves = [];
+        
+        for (const move of emptyCells) {
+            const newState = this.makeMove(move);
+            // 检查这个移动是否创造了多个获胜机会
+            let winCount = 0;
+            const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            
+            for (const [a,b,c] of lines) {
+                if ((newState.board[a] === player && newState.board[b] === player && newState.board[c] === '') ||
+                    (newState.board[a] === player && newState.board[c] === player && newState.board[b] === '') ||
+                    (newState.board[b] === player && newState.board[c] === player && newState.board[a] === '')) {
+                    winCount++;
+                    if (winCount >= 2) {
+                        return move; // 发现双威胁
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    checkWinningMove(player, a, b, c) {
+        const line = [this.board[a], this.board[b], this.board[c]];
+        const playerCount = line.filter(cell => cell === player).length;
+        const emptyCount = line.filter(cell => cell === '').length;
+        return playerCount === 2 && emptyCount === 1;
+    }
+
+    // 在State类中添加findWinningMove方法
+    findWinningMove(player) {
+        const lines = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // 横线
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // 竖线
+            [0, 4, 8], [2, 4, 6]             // 对角线
+        ];
+
+        for (const [a, b, c] of lines) {
+            // 检查是否有两个玩家符号和一个空位
+            if (this.board[a] === player && this.board[b] === player && this.board[c] === '') {
+                return c;
+            }
+            if (this.board[a] === player && this.board[c] === player && this.board[b] === '') {
+                return b;
+            }
+            if (this.board[b] === player && this.board[c] === player && this.board[a] === '') {
+                return a;
+            }
+        }
+        return null;
+    }
+}
+
+// 1. 首先定义所有全局变量和状态
+let gameState = new State(Array(9).fill(''), 'X');
+let mcts = new MCTS(gameState, 'X', difficultyMap[currentDifficulty].iterations, difficultyMap[currentDifficulty].maxDepth); 
+let isPlayerTurn = true;
+let aiSymbol = 'O';
+let timer;
+let timerSeconds = 0;
+let aiIterations = 10000;
+let gameStarted = false; // 添加游戏开始状态标记
+
+// 添加用户战绩记录
+let userStats = {
+  easy: { wins: 0, losses: 0, draws: 0 },
+  medium: { wins: 0, losses: 0, draws: 0 },
+  hard: { wins: 0, losses: 0, draws: 0 }
+};
+
+// 2. 创建Web Worker
+const workerCode = `
+  ${MCTSNode.toString()}
+  ${State.toString()}
+  ${MCTS.toString()}
+  
+  self.onmessage = function(e) {
+    const { board, currentPlayer, iterations, maxDepth } = e.data;
+    const state = new State(board, currentPlayer);
+    const mcts = new MCTS(state, currentPlayer, iterations, maxDepth);
+    
+    // 获取getBestMove的函数代码
+    const getBestMove = mcts.getBestMove;
+    
+    // 重新定义getBestMove函数，使用传递的迭代次数
+    mcts.getBestMove = function() {
+      const urgentMove = this.root.state.checkUrgentMove(this.currentPlayer);
+      if (urgentMove !== null) return urgentMove;
+      
+      // 使用传入的迭代次数
+      for (let i = 0; i < iterations; i++) {
+        this.iterate();
+      }
+      
+      let bestChild = null;
+      let bestScore = -Infinity;
+      for (const child of this.root.children) {
+        const winRate = child.wins / (child.visits + Number.EPSILON);
+        if (winRate > bestScore) {
+          bestScore = winRate;
+          bestChild = child;
+        }
+      }
+      return bestChild.state.lastMove;
+    };
+    
+        const move = mcts.getBestMove();
+        self.postMessage({ move });
+    };
+`;
+const blob = new Blob([workerCode], { type: 'application/javascript' });
+const workerUrl = URL.createObjectURL(blob);
+let aiWorker = new Worker(workerUrl);  // 将const改为let
+
+// 3. 设置Worker的消息处理函数
+aiWorker.onmessage = function(e) {
+    const { move } = e.data;
+    // Delay processing to 0.5 seconds so that loading indicator is visible
+    setTimeout(() => {
+    hideLoading();
+        
+        if (gameState.canMove(move)) {
+            gameState = gameState.makeMove(move);
+            document.getElementById(move).innerHTML = `<span>${gameState.currentPlayer === 'X' ? 'O' : 'X'}</span>`;
+            isPlayerTurn = true;
+    
+            if (gameState.gameOver() !== null) {
+                handleGameOver();
+            }
+        }
+    }, 500);
+};
+
+// 4. 定义所有游戏功能函数
+function select(cell) {
+    const index = parseInt(cell.id);
+    if (!isPlayerTurn || !gameState.canMove(index) || gameState.gameOver() !== null) {
+        return;
+    }
+
+    // 清除之前的提示高亮
+    if (hintHighlightedCell) {
+        hintHighlightedCell.style.backgroundColor = '';
+        hintHighlightedCell.style.boxShadow = '';
+        hintHighlightedCell = null;
+    }
+
+    // 终止任何正在进行的提示计算
+    if (hintWorker) {
+        hintWorker.terminate();
+        hintWorker = null;
+    }
+    hintMove = null;
+    updateHintButton();
+
+    // 如果是首次移动，则标记游戏开始并禁用难度选择
+    if (!gameStarted) {
+        gameStarted = true;
+        disableDifficultySelector();
+    }
+
+    const playerSymbol = gameState.currentPlayer;
+    gameState = gameState.makeMove(index);
+    cell.innerHTML = `<span>${playerSymbol}</span>`;
+    isPlayerTurn = false;
+
+    if (gameState.gameOver() !== null) {
+        handleGameOver();
+        return;
+    }
+
+    // 立即显示加载指示器并发送状态到worker
+    showLoading();
+    
+    // 终止可能存在的旧worker（安全措施）
+    if (aiWorker) {
+        aiWorker.terminate();
+    }
+    
+    // 创建新的AI worker
+    aiWorker = new Worker(workerUrl);  // 这里之前会报错，因为aiWorker是const
+    
+    // 设置新的消息处理器
+    aiWorker.onmessage = function(e) {
+        const { move } = e.data;
+        setTimeout(() => {
+            hideLoading();
+            if (gameState.canMove(move)) {
+                gameState = gameState.makeMove(move);
+                document.getElementById(move).innerHTML = `<span>${gameState.currentPlayer === 'X' ? 'O' : 'X'}</span>`;
+                isPlayerTurn = true;
+
+                // AI行动完成后终止提示计算
+                if (hintWorker) {
+                    hintWorker.terminate();
+                    hintWorker = null;
+                }
+                hintMove = null;
+                updateHintButton();
+
+                // 如果是玩家回合，开始新的提示计算
+                if (isPlayerTurn) {
+                    calculateHint();
+                }
+
+                if (gameState.gameOver() !== null) {
+                    handleGameOver();
+                }
+            }
+        }, 500);
+    };
+
+    aiWorker.postMessage({
+        board: gameState.board,
+        currentPlayer: gameState.currentPlayer,
+        iterations: difficultyMap[currentDifficulty].iterations,
+        maxDepth: difficultyMap[currentDifficulty].maxDepth
+    });
+    
+    // 立即更新提示按钮状态
+    updateHintButton();
+}
+
+function restart() {
+    // 清除所有高亮样式
+    document.querySelectorAll('td').forEach(td => {
+        td.style.backgroundColor = '';
+        td.style.boxShadow = '';
+    });
+
+    // 清除提示高亮
+    if (hintHighlightedCell) {
+        hintHighlightedCell.style.backgroundColor = '';
+        hintHighlightedCell.style.boxShadow = '';
+        hintHighlightedCell = null;
+    }
+
+    // 终止任何正在进行的提示计算
+    if (hintWorker) {
+        hintWorker.terminate();
+        hintWorker = null;
+    }
+    hintMove = null;
+    updateHintButton();
+
+    
+    // 重置游戏状态
+    gameState = new State(Array(9).fill(''), 'X');
+    mcts = new MCTS(gameState, 'X', difficultyMap[currentDifficulty].iterations, difficultyMap[currentDifficulty].maxDepth);
+    isPlayerTurn = true;
+    aiSymbol = 'O';
+    gameStarted = false; // 重置游戏开始状态
+  
+    // 更新符号显示
+    document.getElementById('playerSymbol').textContent = 'X';
+    document.getElementById('aiSymbol').textContent = 'O';
+  
+    // 重置游戏界面
+    document.querySelector('table').classList.remove('game-over');
+    document.querySelectorAll('td').forEach(cell => {
+        cell.innerHTML = '';
+    });
+  
+    // 清空游戏状态文本
+    document.getElementById('gameStatus').textContent = '';
+  
+    // 隐藏加载指示器和状态行
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    loadingIndicator.style.display = 'none';
+  
+    // 确保计时器停止
+    stopTimer();
+  
+    // 启用难度选择器
+    enableDifficultySelector();
+    updateHintButton();
+}
+
+function aiFirst() {
+    // 清除所有高亮样式
+    document.querySelectorAll('td').forEach(td => {
+        td.style.backgroundColor = '';
+        td.style.boxShadow = '';
+    });
+
+    // 清除提示高亮
+    if (hintHighlightedCell) {
+        hintHighlightedCell.style.backgroundColor = '';
+        hintHighlightedCell.style.boxShadow = '';
+        hintHighlightedCell = null;
+    }
+
+    // 终止任何正在进行的提示计算
+    if (hintWorker) {
+        hintWorker.terminate();
+        hintWorker = null;
+    }
+    hintMove = null;
+    updateHintButton();
+    // 首先重置游戏
+    document.querySelector('table').classList.remove('game-over');
+    document.querySelectorAll('td').forEach(cell => {
+        cell.innerHTML = '';
+    });
+    document.getElementById('gameStatus').textContent = '';
+  
+    // 重置游戏状态
+    gameState = new State(Array(9).fill(''), 'X');
+    mcts = new MCTS(gameState, 'X', difficultyMap[currentDifficulty].iterations, difficultyMap[currentDifficulty].maxDepth);
+  
+    // 设置AI为先手
+    isPlayerTurn = false;
+    aiSymbol = 'X';
+  
+    // 更新符号显示
+    document.getElementById('playerSymbol').textContent = 'O';
+    document.getElementById('aiSymbol').textContent = 'X';
+  
+    // 标记游戏开始并禁用难度选择
+    gameStarted = true;
+    disableDifficultySelector();
+  
+    // 显示加载指示器并确保状态行可见
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const statusRow = document.querySelector('.status-row');
+    loadingIndicator.style.display = 'flex';
+    statusRow.style.display = 'flex';
+  
+    // 启动计时器
+    startTimer();
+  
+    // 确保在DOM更新后再发送消息给AI
+    setTimeout(() => {
+        if (aiWorker) {
+            aiWorker.terminate();
+        }
+        aiWorker = new Worker(workerUrl);  // 重新创建worker
+        aiWorker.postMessage({
+            board: gameState.board,
+            currentPlayer: gameState.currentPlayer,
+            iterations: difficultyMap[currentDifficulty].iterations,
+            maxDepth: difficultyMap[currentDifficulty].maxDepth
+        });
+    }, 50);
+    updateHintButton();
+}
+
+// 5. 设置计时器函数
+function startTimer() {
+  timerSeconds = 0;
+  document.getElementById('timerDisplay').textContent = '0';
+  timer = setInterval(() => {
+    timerSeconds++;
+    const display = document.getElementById('timerDisplay');
+    display.textContent = timerSeconds;
+    
+    // 自动调整字体大小，防止数字过大
+    if (timerSeconds >= 10) {
+      display.style.fontSize = '0.8rem';
+    }
+    if (timerSeconds >= 100) {
+      display.style.fontSize = '0.7rem';
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timer);
+  timerSeconds = 0;
+}
+
+// 6. 设置难度函数
+function setDifficulty(btn) {
+    // 如果游戏已经开始且还没结束，不允许更改难度
+    if (gameStarted && gameState.gameOver() === null) return;
+    
+    const newDifficulty = btn.getAttribute('data-difficulty');
+    
+    // 如果点击的是当前已选中的难度按钮，不做任何操作
+    if (newDifficulty === currentDifficulty) return;
+    
+    // 移除所有按钮的active类
+    document.querySelectorAll('.difficulty-btn').forEach(b => {
+        b.classList.remove('active');
+    });
+    
+    // 设置当前按钮为active
+    btn.classList.add('active');
+    
+    // 更新当前难度和迭代次数
+    currentDifficulty = newDifficulty;
+    aiIterations = difficultyMap[newDifficulty].iterations;
+    
+    // 如果游戏已经结束，则重启游戏
+    if (gameState.gameOver() !== null) {
+        restart();
+    }
+}
+
+// 禁用难度选择器
+function disableDifficultySelector() {
+  const diffSelector = document.querySelector('.difficulty-selector');
+  const diffLabel = diffSelector ? diffSelector.querySelector('span[data-lang="difficulty"]') : null;
+  
+  if (!diffSelector || !diffLabel) return; // 安全检查
+  
+  // 添加禁用样式
+  diffSelector.classList.add('disabled');
+  
+  // 更改标签文本
+  diffLabel.setAttribute('data-lang', 'difficultyLocked');
+  diffLabel.textContent = translations[currentLang].difficultyLocked;
+  
+  // 禁用按钮点击
+  document.querySelectorAll('.difficulty-btn').forEach(btn => {
+    btn.style.opacity = '0.7';
+    btn.style.cursor = 'not-allowed';
+    btn.setAttribute('disabled', 'true');
+  });
+}
+
+// 启用难度选择器
+function enableDifficultySelector() {
+  const diffSelector = document.querySelector('.difficulty-selector');
+  const diffLabel = diffSelector ? diffSelector.querySelector('span[data-lang="difficultyLocked"]') : null;
+  
+  if (!diffSelector) return; // 安全检查
+  
+  // 移除禁用样式
+  diffSelector.classList.remove('disabled');
+  
+  // 恢复标签文本
+  if (diffLabel) {
+    diffLabel.setAttribute('data-lang', 'difficulty');
+    diffLabel.textContent = translations[currentLang].difficulty;
+  }
+  
+  // 启用按钮点击
+  document.querySelectorAll('.difficulty-btn').forEach(btn => {
+    btn.style.opacity = '';
+    btn.style.cursor = '';
+    btn.removeAttribute('disabled');
+  });
+}
+
+// 7. 最后添加window对象方法和事件监听器
+window.select = select;
+window.restart = restart;
+window.aiFirst = aiFirst;
+window.toggleLangDrawer = toggleLangDrawer;
+window.switchLang = switchLang;
+window.setDifficulty = setDifficulty;
+window.toggleLangOptions = toggleLangOptions;
+window.detectBrowserLanguage = detectBrowserLanguage;
+
+// 8. 清理函数
+window.addEventListener('beforeunload', () => {
+    aiWorker.terminate();
+    URL.revokeObjectURL(workerUrl);
+});
+
+// 在现有代码基础上添加这段监听器
+document.addEventListener('click', function(event) {
+  // 获取语言抽屉和语言切换按钮
+  const langDrawer = document.getElementById('langDrawer');
+  const langToggle = document.querySelector('.lang-toggle');
+  const langOverlay = document.getElementById('langOverlay');
+  
+  // 如果语言抽屉是打开的，且点击的不是语言抽屉内的元素且不是语言切换按钮且不是遮罩层
+  if (langDrawer.classList.contains('open') && 
+      !langDrawer.contains(event.target) && 
+      !langToggle.contains(event.target) &&
+      !langOverlay.contains(event.target)) {
+    // 关闭语言抽屉
+    langDrawer.classList.remove('open');
+    langOverlay.classList.remove('visible');
+    document.body.style.overflow = ''; // 恢复背景滚动
+    
+    // 关闭侧边栏时，同时折叠语言选项
+    const langOptions = document.getElementById('langOptions');
+    const arrowIcon = document.querySelector('.arrow-icon');
+    if (langOptions.classList.contains('expanded')) {
+      langOptions.classList.remove('expanded');
+      arrowIcon.classList.remove('expanded');
+      
+      // 确保当前语言选项在首位
+      const activeOption = document.querySelector('.lang-option.active');
+      if (activeOption) {
+        langOptions.insertBefore(activeOption, langOptions.firstChild);
+      }
+    }
+  }
+});
+
+// 定义显示和隐藏加载指示器的函数
+function showLoading() {
+  const loadingIndicator = document.getElementById('loadingIndicator');
+  loadingIndicator.style.display = 'flex';
+  startTimer();
+}
+
+function hideLoading() {
+  const loadingIndicator = document.getElementById('loadingIndicator');
+  loadingIndicator.style.display = 'none';
+  stopTimer();
+}
+
+/* 添加toggleLangOptions函数 */
+function toggleLangOptions() {
+  const langOptions = document.getElementById('langOptions');
+  const arrowIcon = document.querySelector('.arrow-icon');
+  
+  langOptions.classList.toggle('expanded');
+  arrowIcon.classList.toggle('expanded');
+  
+  // 确保当前语言选项可见
+  if (!langOptions.classList.contains('expanded')) {
+    // 如果折叠，确保当前语言选项在首位
+    const activeOption = document.querySelector('.lang-option.active');
+    if (activeOption) {
+      const optionsContainer = document.getElementById('langOptions');
+      optionsContainer.insertBefore(activeOption, optionsContainer.firstChild);
+    }
+  }
+}
+
+// 检测浏览器默认语言的函数
+function detectBrowserLanguage() {
+  // 获取浏览器语言设置
+  const browserLang = navigator.language || navigator.userLanguage;
+  
+  // 支持的语言代码
+  const supportedLangs = Object.keys(translations);
+  
+  // 检查是否完全匹配
+  for (const lang of supportedLangs) {
+    if (browserLang.toLowerCase() === lang.toLowerCase() || 
+        browserLang.toLowerCase().startsWith(lang.toLowerCase() + '-')) {
+      return lang;
+    }
+  }
+  
+  // 检查是否部分匹配（仅语言代码，不考虑地区）
+  const langCode = browserLang.split('-')[0].toLowerCase();
+  for (const lang of supportedLangs) {
+    if (lang.toLowerCase() === langCode) {
+      return lang;
+    }
+  }
+  
+  // 默认返回中文，如果中文不可用则返回英文
+  return 'zh' in translations ? 'zh' : 'en';
+}
+
+// 添加调试函数
+function debugDifficulty() {
+    console.log('当前难度:', currentDifficulty);
+    console.log('当前AI迭代次数:', aiIterations);
+    console.log('简单模式战绩:', userStats.easy);
+    console.log('中等模式战绩:', userStats.medium);
+    console.log('困难模式战绩:', userStats.hard);
+}
+
+// 添加重置统计函数
+function resetStats() {
+    const btn = document.querySelector('.reset-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-dots">' + translations[currentLang].resetting + '</span>';
+    
+    setTimeout(() => {
+        if (confirm(translations[currentLang].confirmReset)) {
+            userStats = {
+                easy: { wins: 0, losses: 0, draws: 0 },
+                medium: { wins: 0, losses: 0, draws: 0 },
+                hard: { wins: 0, losses: 0, draws: 0 }
+            };
+            saveUserStats();
+            updateStatsDisplay();
+            
+            // 添加视觉反馈
+            btn.style.backgroundColor = '#4CAF50';
+            btn.style.color = 'white';
+            btn.innerHTML = translations[currentLang].resetComplete;
+            
+            setTimeout(() => {
+                btn.innerHTML = translations[currentLang].resetStats;
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+                btn.disabled = false;
+            }, 1000);
+        } else {
+            btn.innerHTML = translations[currentLang].resetStats;
+            btn.disabled = false;
+        }
+    }, 300);
+}
+
+// 添加获取提示的函数
+function getHint() {
+    // 添加更严格的检查条件
+    if (!isPlayerTurn || gameState.gameOver() !== null || 
+        hintMove === null || !gameState.canMove(hintMove)) {
+        return;
+    }
+    
+    // 清除之前的高亮
+    if (hintHighlightedCell) {
+        hintHighlightedCell.style.backgroundColor = '';
+        hintHighlightedCell.style.boxShadow = '';
+    }
+    
+    // 高亮显示提示位置
+    hintHighlightedCell = document.getElementById(hintMove);
+    hintHighlightedCell.style.backgroundColor = 'rgba(94, 53, 177, 0.3)';
+    hintHighlightedCell.style.boxShadow = '0 0 10px rgba(94, 53, 177, 0.5)';
+    
+    // 3秒后自动移除高亮
+    setTimeout(() => {
+        if (hintHighlightedCell) {
+            hintHighlightedCell.style.backgroundColor = '';
+            hintHighlightedCell.style.boxShadow = '';
+            hintHighlightedCell = null;
+        }
+    }, 3000);
+}
+
+// 添加更新提示按钮状态的函数
+function updateHintButton() {
+    const hintBtn = document.querySelector('.hint-btn');
+    // 更严格的显示条件检查
+    const shouldShow = isPlayerTurn && 
+                      gameState.gameOver() === null && 
+                      hintMove !== null && 
+                      gameState.canMove(hintMove);
+    
+    hintBtn.style.display = shouldShow ? 'inline-block' : 'none';
+    hintBtn.disabled = !shouldShow;
+    
+    // 确保按钮可以点击
+    if (shouldShow) {
+        hintBtn.style.pointerEvents = 'auto';
+        hintBtn.style.opacity = '1';
+    } else {
+        hintBtn.style.pointerEvents = 'none';
+        hintBtn.style.opacity = '0.7';
+    }
+}
+
+// 在全局变量部分添加
+let hintMove = null;
+let hintWorker = null;
+let hintHighlightedCell = null; // 新增：记录当前高亮的提示单元格
+
+// 添加calculateHint函数
+function calculateHint() {
+    // 如果当前不是玩家回合或游戏已结束，不进行计算
+    if (!isPlayerTurn || gameState.gameOver() !== null) {
+        hintMove = null;
+        updateHintButton();
+        return;
+    }
+
+    // 清除之前的高亮
+    if (hintHighlightedCell) {
+        hintHighlightedCell.style.backgroundColor = '';
+        hintHighlightedCell.style.boxShadow = '';
+        hintHighlightedCell = null;
+    }
+
+    // 如果已经有worker在运行，先终止它
+    if (hintWorker) {
+        hintWorker.terminate();
+    }
+    
+    hintMove = null;
+    updateHintButton();
+    
+    hintWorker = new Worker(workerUrl);
+    
+    hintWorker.onmessage = function(e) {
+        const { move } = e.data;
+        // 确保提示位置是合法的移动
+        if (gameState.canMove(move)) {
+            hintMove = move;
+        } else {
+            hintMove = null;
+        }
+        updateHintButton(); // 确保每次计算完成后都更新按钮状态
+    };
+
+    hintWorker.onerror = function(error) {
+        console.error('Hint calculation error:', error);
+        hintMove = null;
+        updateHintButton();
+    };
+    
+    // 使用最高难度的迭代次数计算提示
+    hintWorker.postMessage({
+        board: gameState.board,
+        currentPlayer: gameState.currentPlayer,
+        iterations: difficultyMap.hard.iterations,
+        maxDepth: difficultyMap.hard.maxDepth
+    });
+}
+
+// 在DOMContentLoaded事件中添加
+document.addEventListener('DOMContentLoaded', () => {
+    // ... existing code ...
+    
+    // 初始化提示按钮为隐藏状态
+    updateHintButton();
+    
+    // 如果游戏开始时是玩家回合，立即计算提示
+    if (isPlayerTurn) {
+        calculateHint();
+    }
+    
+    // 添加游戏状态变化时的提示更新
+    document.querySelector('table').addEventListener('click', function() {
+        // 如果是玩家回合且游戏未结束，计算新提示
+        if (isPlayerTurn && gameState.gameOver() === null) {
+            calculateHint();
+        } else {
+            // 如果是AI回合，清除提示
+            hintMove = null;
+            updateHintButton();
+        }
+    });
+});
+
+aiWorker.onerror = function(error) {
+    console.error('AI Worker error:', error);
+    hideLoading();
+    // 可以在这里添加用户友好的错误提示
+};
+</script>
+</html>
