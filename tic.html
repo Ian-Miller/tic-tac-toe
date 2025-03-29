@@ -1098,7 +1098,7 @@
     </div>
     <div class="difficulty-selector">
     <span data-lang="difficulty">难度</span>
-    <button class="difficulty-btn active" data-difficulty="hard" data-iterations="100000" onclick="setDifficulty(this)">
+    <button class="difficulty-btn active" data-difficulty="hard" data-iterations="500000" onclick="setDifficulty(this)">
         <span data-lang="hard">困难</span>
     </button>
 </div>
@@ -1797,7 +1797,7 @@ class MCTS {
 // 全局变量
 let currentDifficulty = 'hard'; // 只保留困难难度
 const difficultyMap = {
-    hard: { iterations: 100000, maxDepth: 9 }
+    hard: { iterations: 500000, maxDepth: 9 }
 };
 
 // 重设难度设置函数
@@ -2033,7 +2033,7 @@ let isPlayerTurn = true;
 let aiSymbol = 'O';
 let timer;
 let timerSeconds = 0;
-let aiIterations = 10000;
+let aiIterations = 500000;
 let gameStarted = false; // 添加游戏开始状态标记
 
 // 添加用户战绩记录
