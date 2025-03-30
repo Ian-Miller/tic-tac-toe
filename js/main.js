@@ -57,6 +57,14 @@ function createAlgorithmSelector() {
   algorithmLabel.setAttribute('data-lang', 'algorithm');
   algorithmLabel.textContent = i18n.translations['zh'].algorithm || '算法：';
   
+  // 创建按钮容器以便更好控制布局
+  const buttonContainer = document.createElement('div');
+  buttonContainer.className = 'algorithm-buttons';
+  buttonContainer.style.display = 'flex';
+  buttonContainer.style.gap = '8px';
+  buttonContainer.style.width = '100%';
+  buttonContainer.style.justifyContent = 'center';
+  
   const mctsBtn = document.createElement('button');
   mctsBtn.className = 'algorithm-btn active';
   mctsBtn.setAttribute('data-algorithm', 'mcts');
@@ -72,13 +80,41 @@ function createAlgorithmSelector() {
   minimaxBtn.onclick = function() { game.setAlgorithm(this); };
   
   algorithmSelector.appendChild(algorithmLabel);
-  algorithmSelector.appendChild(mctsBtn);
-  algorithmSelector.appendChild(minimaxBtn);
+  buttonContainer.appendChild(mctsBtn);
+  buttonContainer.appendChild(minimaxBtn);
+  algorithmSelector.appendChild(buttonContainer);
   
   // 查找游戏控制区域，将算法选择器添加到其前面
   const gameControls = document.querySelector('.game-controls');
   if (gameControls && gameControls.parentNode) {
     gameControls.parentNode.insertBefore(algorithmSelector, gameControls);
+  }
+
+  // 响应式调整（移动设备上缩短文本）
+  if (window.innerWidth <= 480) {
+    const shortenAlgorithmLabels = () => {
+      const mctsLang = i18n.currentLang;
+      const shortLabels = {
+        'zh': { mcts: 'MCTS', minimax: '极小极大' },
+        'en': { mcts: 'MCTS', minimax: 'Minimax' },
+        'ja': { mcts: 'MCTS', minimax: 'ミニマックス' },
+        'ko': { mcts: 'MCTS', minimax: '미니맥스' },
+        'ru': { mcts: 'MCTS', minimax: 'Минимакс' },
+        'fr': { mcts: 'MCTS', minimax: 'Minimax' },
+        'es': { mcts: 'MCTS', minimax: 'Minimax' },
+        'de': { mcts: 'MCTS', minimax: 'Minimax' }
+      };
+      
+      if (shortLabels[mctsLang]) {
+        mctsBtn.textContent = shortLabels[mctsLang].mcts;
+        minimaxBtn.textContent = shortLabels[mctsLang].minimax;
+      }
+    };
+    
+    shortenAlgorithmLabels();
+    
+    // 当语言变化时也调整标签
+    document.addEventListener('langChanged', shortenAlgorithmLabels);
   }
 }
 
@@ -343,6 +379,41 @@ function setupGlobalEventHandlers() {
         } else {
           sidebar.style.transform = 'translateX(0)';
         }
+      }
+    }
+    
+    // 处理算法按钮文本
+    const algorithmBtns = document.querySelectorAll('.algorithm-btn');
+    if (algorithmBtns.length) {
+      const isNarrow = window.innerWidth <= 480;
+      
+      // 根据屏幕宽度调整算法按钮文本
+      if (isNarrow) {
+        const shortLabels = {
+          'zh': { mcts: 'MCTS', minimax: '极小极大' },
+          'en': { mcts: 'MCTS', minimax: 'Minimax' },
+          'ja': { mcts: 'MCTS', minimax: 'ミニマックス' },
+          'ko': { mcts: 'MCTS', minimax: '미니맥스' },
+          'ru': { mcts: 'MCTS', minimax: 'Минимакс' },
+          'fr': { mcts: 'MCTS', minimax: 'Minimax' },
+          'es': { mcts: 'MCTS', minimax: 'Minimax' },
+          'de': { mcts: 'MCTS', minimax: 'Minimax' }
+        };
+        
+        algorithmBtns.forEach(btn => {
+          const algo = btn.getAttribute('data-algorithm');
+          if (algo && shortLabels[i18n.currentLang] && shortLabels[i18n.currentLang][algo]) {
+            btn.textContent = shortLabels[i18n.currentLang][algo];
+          }
+        });
+      } else {
+        // 恢复完整文本
+        algorithmBtns.forEach(btn => {
+          const algo = btn.getAttribute('data-algorithm');
+          if (algo) {
+            btn.textContent = i18n.translations[i18n.currentLang][algo] || btn.textContent;
+          }
+        });
       }
     }
     

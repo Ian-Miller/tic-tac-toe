@@ -828,13 +828,17 @@ td:not(.game-over):hover {
 /* 移动端适配 */
 @media (max-width: 768px) {
   body {
-    padding: 10px;
+    padding: 10px 12px;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   h1 {
-    font-size: 2.2rem;
+    font-size: 2rem;
     margin-top: 20px;
     margin-bottom: 10px;
+    word-break: keep-all;
   }
   
   h2 {
@@ -842,7 +846,10 @@ td:not(.game-over):hover {
   }
   
   .game-container {
-    padding: 15px 20px;
+    padding: 15px 12px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 15px auto;
   }
   
   table {
@@ -856,6 +863,8 @@ td:not(.game-over):hover {
   .symbols-indicator {
     flex-direction: column;
     gap: 5px;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .loading-indicator {
@@ -866,6 +875,7 @@ td:not(.game-over):hover {
   .difficulty-selector {
     flex-direction: column;
     align-items: center;
+    width: 100%;
   }
   
   .difficulty-btn {
@@ -873,35 +883,46 @@ td:not(.game-over):hover {
   }
   
   .restart-btn, .ai-first-btn, .hint-btn {
-    padding: 10px 20px;
-    font-size: 1rem;
-    min-width: 120px;
+    padding: 10px 15px;
+    font-size: 0.95rem;
+    min-width: 100px;
   }
   
   .game-status-area {
     height: auto;
     min-height: 60px;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .game-status {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     padding: 10px;
+    word-break: break-word;
   }
   
   .game-controls {
     width: 100%;
     flex-wrap: wrap;
     gap: 8px;
+    justify-content: center;
   }
   
   .algorithm-selector {
     flex-direction: column;
     align-items: center;
     gap: 8px;
+    width: 100%;
   }
   
   .algorithm-btn {
     width: 100%;
+    font-size: 0.9rem;
+    padding: 8px 10px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .sidebar {
@@ -911,6 +932,36 @@ td:not(.game-over):hover {
   .game-intro a {
     padding: 2px 5px;
     margin: 0 2px;
+  }
+
+  /* 游戏介绍文本调整 */
+  .game-intro {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    width: 100%;
+    box-sizing: border-box;
+    word-break: break-word;
+  }
+
+  /* 统计区域调整 */
+  .stats-container {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 15px 10px;
+  }
+
+  .stats-container h3 {
+    font-size: 1.3rem;
+  }
+
+  .diff-stat {
+    min-width: 130px;
+    padding: 12px 10px;
+    font-size: 0.95rem;
+  }
+
+  .diff-stat h4 {
+    font-size: 1.1rem;
   }
   
   .hint-btn {
@@ -950,8 +1001,14 @@ td:not(.game-over):hover {
 }
 
 @media (max-width: 360px) {
+  body {
+    padding: 8px;
+  }
+  
   h1 {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
+    margin-top: 15px;
+    margin-bottom: 8px;
   }
   
   table {
@@ -964,7 +1021,8 @@ td:not(.game-over):hover {
   }
   
   .difficulty-btn {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    padding: 6px 8px;
   }
   
   .button-container {
@@ -972,9 +1030,9 @@ td:not(.game-over):hover {
   }
   
   .restart-btn, .ai-first-btn, .hint-btn {
-    padding: 8px 12px;
-    font-size: 0.9rem;
-    min-width: 100px;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    min-width: 80px;
   }
   
   .algorithm-selector {
@@ -982,20 +1040,55 @@ td:not(.game-over):hover {
   }
   
   .algorithm-btn {
-    font-size: 0.8rem;
-    padding: 6px 10px;
+    font-size: 0.75rem;
+    padding: 6px 8px;
+    line-height: 1.2;
   }
   
   .game-status {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     padding: 5px;
   }
   
   .hint-btn {
-    bottom: 70px;
+    bottom: 15px;
     right: 15px;
     width: 45px;
     height: 45px;
+  }
+  
+  .diff-stat {
+    min-width: 100%;
+    padding: 10px 8px;
+    font-size: 0.85rem;
+  }
+  
+  .diff-stat h4 {
+    font-size: 1rem;
+  }
+  
+  .stats-container h3 {
+    font-size: 1.2rem;
+  }
+  
+  .game-intro {
+    font-size: 0.85rem;
+  }
+  
+  .sidebar-section h3 {
+    font-size: 1.2rem;
+  }
+  
+  .game-controls {
+    gap: 5px;
+  }
+  
+  .symbol-box {
+    font-size: 0.9rem;
+  }
+  
+  .symbol-box span:last-child {
+    font-size: 1.2rem;
   }
 }
 
