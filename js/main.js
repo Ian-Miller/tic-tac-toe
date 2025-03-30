@@ -19,6 +19,20 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // 设置全局事件处理函数
   setupGlobalEventHandlers();
+  
+  // 移动设备上重新放置提示按钮
+  if (window.innerWidth <= 768) {
+    const hintBtn = document.querySelector('.hint-btn');
+    if (hintBtn && hintBtn.parentNode) {
+      // 从当前位置移除
+      hintBtn.parentNode.removeChild(hintBtn);
+      // 添加到body末尾
+      document.body.appendChild(hintBtn);
+    }
+  }
+  
+  // 游戏自动开始
+  game.restart();
 });
 
 /**
@@ -169,6 +183,8 @@ window.toggleSidebar = function() {
   
   // 检查侧边栏是否已经打开
   const isOpen = sidebar.classList.contains('open');
+  // 检查是否是移动设备
+  const isNarrow = window.innerWidth <= 480;
   
   // 切换侧边栏状态
   if (isOpen) {
@@ -176,11 +192,21 @@ window.toggleSidebar = function() {
     document.body.classList.remove('sidebar-open');
     overlay.classList.remove('visible');
     sidebar.classList.remove('open');
+    
+    // 根据设备类型设置转换
+    if (!isNarrow) {
+      sidebar.style.transform = 'translateX(0)';
+    }
   } else {
     // 打开侧边栏
     document.body.classList.add('sidebar-open');
     sidebar.classList.add('open');
     overlay.classList.add('visible');
+    
+    // 根据设备类型设置转换
+    if (!isNarrow) {
+      sidebar.style.transform = 'translateX(320px)';
+    }
   }
 };
 
@@ -263,4 +289,64 @@ function setupGlobalEventHandlers() {
     // 在页面加载时添加一个历史记录条目
     history.pushState(null, null, window.location.href);
   }
+  
+  // 处理窗口大小变化
+  window.addEventListener('resize', function() {
+    // 先处理提示按钮
+    const isMobile = window.innerWidth <= 768;
+    const hintBtn = document.querySelector('.hint-btn');
+    
+    if (hintBtn) {
+      if (isMobile) {
+        // 如果还在原来的位置，将其移到body
+        const isInGameControls = hintBtn.closest('.game-controls');
+        if (isInGameControls) {
+          document.body.appendChild(hintBtn);
+        }
+        // 更新样式
+        hintBtn.style.position = 'fixed';
+        hintBtn.style.bottom = '15px';
+        hintBtn.style.right = '15px';
+        hintBtn.style.zIndex = '1000';
+      } else {
+        // 如果附加到body上，移回游戏控制区
+        const isInBody = hintBtn.parentNode === document.body;
+        if (isInBody) {
+          const gameControls = document.querySelector('.game-controls');
+          if (gameControls) {
+            gameControls.appendChild(hintBtn);
+          }
+        }
+        // 清除position样式
+        hintBtn.style.position = '';
+        hintBtn.style.bottom = '';
+        hintBtn.style.right = '';
+        hintBtn.style.zIndex = '';
+      }
+    }
+    
+    // 处理侧边栏
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) {
+      // 判断当前是移动设备还是桌面设备
+      const isNarrow = window.innerWidth <= 480;
+      
+      if (isNarrow) {
+        // 移动设备样式已通过媒体查询设置
+      } else {
+        // 桌面设备上恢复固定尺寸
+        sidebar.style.left = '-320px';
+        sidebar.style.width = '320px';
+        
+        if (sidebar.classList.contains('open')) {
+          sidebar.style.transform = 'translateX(320px)';
+        } else {
+          sidebar.style.transform = 'translateX(0)';
+        }
+      }
+    }
+    
+    // 更新UI状态
+    UI.updateHintButton(game);
+  });
 } 

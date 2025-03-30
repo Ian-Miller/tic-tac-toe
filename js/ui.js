@@ -22,32 +22,29 @@ const UI = {
     
     // 修改显示逻辑
     if (isMobile) {
-      // 在移动设备上，仅在可用时显示按钮，否则完全隐藏
+      // 在移动设备上，始终使用固定定位，仅在需要时才显示
+      hintBtn.style.position = 'fixed';
       hintBtn.style.display = canShowHint ? 'flex' : 'none';
+      hintBtn.style.opacity = canShowHint ? '1' : '0';
+      hintBtn.style.pointerEvents = canShowHint ? 'auto' : 'none';
       
-      // 如果可见，确保按钮位置是固定的
-      if (canShowHint) {
-        // 确保按钮在固定位置
-        hintBtn.style.position = 'fixed';
-        hintBtn.style.opacity = '1';
-        hintBtn.style.transform = 'scale(1)';
-        hintBtn.style.pointerEvents = 'auto';
-      }
+      // 确保hint按钮始终位于视窗底部右侧
+      hintBtn.style.bottom = '15px';
+      hintBtn.style.right = '15px';
+      hintBtn.style.zIndex = '1000';
     } else {
       // 在桌面设备上使用原来的逻辑
+      hintBtn.style.position = '';
       hintBtn.style.display = canShowHint ? 'inline-block' : 'none';
+      hintBtn.style.opacity = canShowHint ? '1' : '0.7';
+      hintBtn.style.pointerEvents = canShowHint ? 'auto' : 'none';
+      // 清除移动设备上的样式
+      hintBtn.style.bottom = '';
+      hintBtn.style.right = '';
+      hintBtn.style.zIndex = '';
     }
     
     hintBtn.disabled = !canShowHint;
-    
-    // 确保按钮可以点击
-    if (canShowHint) {
-      hintBtn.style.pointerEvents = 'auto';
-      hintBtn.style.opacity = '1';
-    } else {
-      hintBtn.style.pointerEvents = 'none';
-      hintBtn.style.opacity = '0.7';
-    }
   },
   
   /**
