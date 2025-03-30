@@ -1,19 +1,22 @@
-# 蒙特卡洛树搜索井字棋
+# Monte Carlo Tree Search Tic-Tac-Toe
 
-这是一个基于蒙特卡洛树搜索(MCTS)算法实现的井字棋游戏。
+[English](#english) | [中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Русский](README.ru.md) | [Français](README.fr.md)
 
-## 项目简介
+<picture>
+  <source srcset="preview.en.jpeg" />
+  <img src="preview.jpeg" alt="Game preview" />
+</picture>
 
-本项目是我在学习蒙特卡洛树搜索算法过程中的实践作品。蒙特卡洛树搜索是一种用于决策过程的启发式搜索算法，特别适用于棋类游戏的AI实现。
+## Project Introduction
 
-在这个井字棋游戏中，AI对手使用MCTS算法来决定最佳落子位置，通过以下步骤：
-1. 选择：从根节点开始，使用UCB公式选择最有前途的子节点
-2. 扩展：如果到达未完全扩展的节点，创建新的子节点
-3. 模拟：从新节点开始随机模拟到游戏结束
-4. 反向传播：将模拟结果更新回所有访问过的节点
+This is a Tic-Tac-Toe game implemented using the Monte Carlo Tree Search (MCTS) algorithm.
 
-算法还包含了温度参数调整和紧急走法识别等优化策略。
+This project is my practical work while learning the Monte Carlo Tree Search algorithm. MCTS is a heuristic search algorithm used for decision processes, particularly suitable for AI implementation in board games.
 
-## 游戏预览
+In this Tic-Tac-Toe game, the AI opponent uses the MCTS algorithm to determine the best move through the following steps:
+1. Selection: Starting from the root node, select the most promising child node using the UCB formula
+2. Expansion: If a node that is not fully expanded is reached, create new child nodes
+3. Simulation: Randomly simulate the game to completion from the new node
+4. Backpropagation: Update the results back to all visited nodes
 
-![游戏界面预览](preview.jpeg)
+The algorithm also includes optimization strategies such as temperature parameter adjustment and urgent move recognition.
