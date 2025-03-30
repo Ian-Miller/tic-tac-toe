@@ -599,9 +599,10 @@ class Game {
     
     // 标记游戏已开始
     this.gameStarted = true;
-    
     // 更新游戏状态
     this.gameState = this.gameState.makeMove(index);
+    // 更新算法按钮状态
+    UI.updateAlgorithmButtons(this);
     
     // 更新UI
     const cell = document.getElementById(index.toString());
