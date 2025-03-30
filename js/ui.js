@@ -17,8 +17,27 @@ const UI = {
                       game.hintMove !== null && 
                       game.gameState.canMove(game.hintMove);
     
+    // 检测是否是移动设备
+    const isMobile = window.innerWidth <= 768;
+    
     // 修改显示逻辑
-    hintBtn.style.display = canShowHint ? 'inline-block' : 'none';
+    if (isMobile) {
+      // 在移动设备上，仅在可用时显示按钮，否则完全隐藏
+      hintBtn.style.display = canShowHint ? 'flex' : 'none';
+      
+      // 如果可见，确保按钮位置是固定的
+      if (canShowHint) {
+        // 确保按钮在固定位置
+        hintBtn.style.position = 'fixed';
+        hintBtn.style.opacity = '1';
+        hintBtn.style.transform = 'scale(1)';
+        hintBtn.style.pointerEvents = 'auto';
+      }
+    } else {
+      // 在桌面设备上使用原来的逻辑
+      hintBtn.style.display = canShowHint ? 'inline-block' : 'none';
+    }
+    
     hintBtn.disabled = !canShowHint;
     
     // 确保按钮可以点击

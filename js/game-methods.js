@@ -174,11 +174,37 @@ Game.prototype.getHint = function() {
   this.hintHighlightedCell.style.backgroundColor = 'rgba(94, 53, 177, 0.3)';
   this.hintHighlightedCell.style.boxShadow = '0 0 10px rgba(94, 53, 177, 0.5)';
   
-  // 自动滚动到棋盘位置
+  // 添加视觉反馈，提示按钮短暂闪烁
+  const hintBtn = document.querySelector('.hint-btn');
+  if (hintBtn) {
+    hintBtn.classList.add('pulse-animation');
+    setTimeout(() => {
+      hintBtn.classList.remove('pulse-animation');
+    }, 1000);
+  }
+  
+  // 检测是否是移动设备
+  const isMobile = window.innerWidth <= 768;
+  
+  // 自动滚动到棋盘位置，在移动设备上调整滚动行为
   this.hintHighlightedCell.scrollIntoView({
     behavior: 'smooth',
-    block: 'center'
+    block: isMobile ? 'start' : 'center',
+    inline: 'nearest'
   });
+  
+  // 移动设备上，额外添加一个延迟滚动，确保视图正确聚焦
+  if (isMobile) {
+    setTimeout(() => {
+      // 计算更精确的滚动位置，确保棋盘在视图中居中
+      const cellRect = this.hintHighlightedCell.getBoundingClientRect();
+      const scrollTop = window.pageYOffset + cellRect.top - (window.innerHeight / 3);
+      window.scrollTo({
+        top: scrollTop,
+        behavior: 'smooth'
+      });
+    }, 100);
+  }
   
   // 3秒后自动移除高亮
   setTimeout(() => {
