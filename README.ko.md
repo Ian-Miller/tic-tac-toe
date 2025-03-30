@@ -2,10 +2,8 @@
 
 [中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | [한국어](#한국어) | [Русский](README.ru.md) | [Français](README.fr.md)
 
-<picture>
-  <source srcset="preview.ko.jpeg" />
-  <img src="preview.jpeg" alt="게임 미리보기" />
-</picture>
+![게임 미리보기](preview.jpeg)
+*참고: preview.ko.jpeg 파일이 존재하는 경우 해당 이미지가 우선적으로 표시됩니다*
 
 ## 프로젝트 소개
 

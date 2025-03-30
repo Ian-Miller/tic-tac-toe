@@ -2,10 +2,8 @@
 
 [中文](README.zh-CN.md) | [English](README.md) | [日本語](#日本語) | [한국어](README.ko.md) | [Русский](README.ru.md) | [Français](README.fr.md)
 
-<picture>
-  <source srcset="preview.ja.jpeg" />
-  <img src="preview.jpeg" alt="ゲームプレビュー" />
-</picture>
+![ゲームプレビュー](preview.jpeg)
+*注：preview.ja.jpegが存在する場合、そちらが優先的に表示されます*
 
 ## プロジェクト紹介
 

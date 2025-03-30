@@ -2,10 +2,8 @@
 
 [English](#english) | [中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Русский](README.ru.md) | [Français](README.fr.md)
 
-<picture>
-  <source srcset="preview.en.jpeg" />
-  <img src="preview.jpeg" alt="Game preview" />
-</picture>
+![Game preview](preview.jpeg)
+*Note: If preview.en.jpeg exists, it will be displayed instead*
 
 ## Project Introduction
 

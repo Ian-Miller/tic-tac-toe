@@ -2,10 +2,8 @@
 
 [中文](#中文) | [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Русский](README.ru.md) | [Français](README.fr.md)
 
-<picture>
-  <source srcset="preview.zh-CN.jpeg" />
-  <img src="preview.jpeg" alt="游戏界面预览" />
-</picture>
+![游戏界面预览](preview.jpeg)
+*注：如果存在preview.zh-CN.jpeg，将优先显示该图片*
 
 ## 项目简介
 

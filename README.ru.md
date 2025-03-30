@@ -2,10 +2,8 @@
 
 [中文](README.zh-CN.md) | [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Русский](#русский) | [Français](README.fr.md)
 
-<picture>
-  <source srcset="preview.ru.jpeg" />
-  <img src="preview.jpeg" alt="Предварительный просмотр игры" />
-</picture>
+![Предварительный просмотр игры](preview.jpeg)
+*Примечание: Если существует файл preview.ru.jpeg, он будет отображаться вместо этого*
 
 ## О проекте
 
