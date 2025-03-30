@@ -1017,6 +1017,48 @@
     transform: translateY(1px);
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
   }
+
+  .algorithm-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .algorithm-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+  }
+  
+  .algorithm-btn:hover {
+    background-color: rgba(74, 111, 255, 0.05);
+  }
+  
+  .algorithm-btn.active {
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  @media (max-width: 600px) {
+    .algorithm-selector {
+      flex-direction: column;
+    }
+    
+    .algorithm-btn {
+      width: 100%;
+      max-width: 270px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -1160,7 +1202,11 @@ const translations = {
     confirmReset: '确定要重置所有战绩数据吗？',
     resetComplete: '已重置！',
     hint: "提示",
-    cannotChangeDifficulty: '游戏进行中无法更换难度'
+    cannotChangeDifficulty: '游戏进行中无法更换难度',
+    algorithm: '算法',
+    mcts: '蒙特卡洛树算法',
+    minimax: '极小极大算法（完美对弈）',
+    cannotChangeAlgorithm: '游戏进行中无法更换算法'
   },
   en: {
     langInfo: 'Info',
@@ -1197,7 +1243,11 @@ const translations = {
     confirmReset: 'Are you sure you want to reset all stats?',
     resetComplete: 'Reset Complete!',
     hint: "Hint",
-    cannotChangeDifficulty: 'Cannot change difficulty while game is in progress'
+    cannotChangeDifficulty: 'Cannot change difficulty while game is in progress',
+    algorithm: 'Algorithm',
+    mcts: 'Monte Carlo Tree Search',
+    minimax: 'Minimax Algorithm (Perfect Play)',
+    cannotChangeAlgorithm: 'Cannot change algorithm while game is in progress'
   },
   ja: {
     langInfo: '説',
@@ -1234,7 +1284,11 @@ const translations = {
     confirmReset: '本当にすべての戦績をリセットしますか？',
     resetComplete: 'リセット完了！',
     hint: "ヒント",
-    cannotChangeDifficulty: 'ゲーム中に難易度を変更できません'
+    cannotChangeDifficulty: 'ゲーム中に難易度を変更できません',
+    algorithm: 'アルゴリズム',
+    mcts: 'モンテカルロ木探索',
+    minimax: 'ミニマックスアルゴリズム（完璧なプレイ）',
+    cannotChangeAlgorithm: 'ゲーム中にアルゴリズムを変更できません'
   },
   ko: {
     langInfo: '설',
@@ -1271,7 +1325,11 @@ const translations = {
     confirmReset: '정말로 모든 전적을 초기화하시겠습니까?',
     resetComplete: '리셋 완료!',
     hint: "힌트",
-    cannotChangeDifficulty: '게임 진행 중에는 난이도를 변경할 수 없습니다'
+    cannotChangeDifficulty: '게임 진행 중에는 난이도를 변경할 수 없습니다',
+    algorithm: '알고리즘',
+    mcts: '몬테카를로 트리 알고리즘',
+    minimax: '미니맥스 알고리즘 (완벽한 플레이)',
+    cannotChangeAlgorithm: '게임 진행 중에는 알고리즘을 변경할 수 없습니다'
   },
   ru: {
     langInfo: 'Инф',
@@ -1308,7 +1366,11 @@ const translations = {
     confirmReset: 'Вы уверены, что хотите сбросить все статистические данные?',
     resetComplete: 'Статистика сброшена!',
     hint: "Подсказка",
-    cannotChangeDifficulty: 'Невозможно изменить сложность во время игры'
+    cannotChangeDifficulty: 'Невозможно изменить сложность во время игры',
+    algorithm: 'Алгоритм',
+    mcts: 'Монте-Карло дерево алгоритм',
+    minimax: 'Алгоритм минимакс (идеальная игра)',
+    cannotChangeAlgorithm: 'Невозможно изменить алгоритм во время игры'
   },
   fr: {
     langInfo: 'Info',
@@ -1345,7 +1407,11 @@ const translations = {
     confirmReset: 'Êtes-vous sûr de vouloir réinitialiser toutes les statistiques ?',
     resetComplete: 'Statistiques réinitialisées !',
     hint: "Indice",
-    cannotChangeDifficulty: 'Impossible de changer de difficulté pendant la partie'
+    cannotChangeDifficulty: 'Impossible de changer de difficulté pendant la partie',
+    algorithm: 'Algorithme',
+    mcts: 'Algorithme d\'arbre de Monte-Carlo',
+    minimax: 'Algorithme Minimax (Jeu parfait)',
+    cannotChangeAlgorithm: 'Impossible de changer d\'algorithme pendant la partie'
   }
 };
 
@@ -1829,7 +1895,7 @@ function setDifficulty(btn) {
 
 // 增强handleGameOver函数
 function handleGameOver() {
-    console.log('游戏结束，当前难度:', currentDifficulty); // 调试
+    console.log('游戏结束，当前难度:', currentDifficulty, '当前算法:', currentAlgorithm); // 调试
     
     const result = gameState.gameOver();
     const statusDiv = document.getElementById('gameStatus');
@@ -1840,13 +1906,13 @@ function handleGameOver() {
     
     if (result === aiSymbol) {
         statusDiv.textContent = translations[currentLang].aiWin;
-        userStats[currentDifficulty].losses++;
+        userStats[currentDifficulty][currentAlgorithm].losses++;
     } else if (result === (aiSymbol === 'X' ? 'O' : 'X')) {
         statusDiv.textContent = translations[currentLang].playerWin;
-        userStats[currentDifficulty].wins++;
+        userStats[currentDifficulty][currentAlgorithm].wins++;
     } else {
         statusDiv.textContent = translations[currentLang].draw;
-        userStats[currentDifficulty].draws++;
+        userStats[currentDifficulty][currentAlgorithm].draws++;
     }
     
     // 调试：打印更新后统计数据
@@ -1862,7 +1928,27 @@ function handleGameOver() {
 function loadUserStats() {
   const savedStats = localStorage.getItem('tictactoeStats');
   if (savedStats) {
-    userStats = JSON.parse(savedStats);
+    const parsedStats = JSON.parse(savedStats);
+    
+    // 兼容旧版本数据格式
+    if (parsedStats.hard && !parsedStats.hard.mcts) {
+      // 旧格式没有按算法区分，将数据迁移到新格式
+      const oldHardStats = { ...parsedStats.hard };
+      parsedStats.hard = {
+        mcts: oldHardStats,
+        minimax: { wins: 0, losses: 0, draws: 0 }
+      };
+    }
+    
+    userStats = parsedStats;
+  } else {
+    // 初始化默认结构
+    userStats = {
+      hard: {
+        mcts: { wins: 0, losses: 0, draws: 0 },
+        minimax: { wins: 0, losses: 0, draws: 0 }
+      }
+    };
   }
 }
 
@@ -1887,38 +1973,125 @@ function calculatePureWinRate(stats) {
 
 // 更新战绩显示
 function updateStatsDisplay() {
-  // 直接更新困难难度战绩
-  const stats = userStats.hard;
+  const statsContainer = document.querySelector('.difficulty-stats');
   
-  const winRate = calculateWinRate(stats);
-  const pureWinRate = calculatePureWinRate(stats);
+  // 清空现有内容
+  statsContainer.innerHTML = '';
   
-  // 更新DOM元素
-  document.getElementById('hard-wins').textContent = stats.wins;
-  document.getElementById('hard-losses').textContent = stats.losses;
-  document.getElementById('hard-draws').textContent = stats.draws;
+  // 获取当前难度的统计数据
+  const difficulty = 'hard'; // 只有hard难度
   
-  const winRateElement = document.getElementById('hard-winrate');
-  const pureWinRateElement = document.getElementById('hard-pure-winrate');
+  // 创建MCTS算法统计区块
+  const mctsStats = userStats[difficulty].mcts;
+  const mctsWinRate = calculateWinRate(mctsStats);
+  const mctsPureWinRate = calculatePureWinRate(mctsStats);
   
-  winRateElement.textContent = winRate + '%';
-  pureWinRateElement.textContent = pureWinRate + '%';
+  const mctsDiv = document.createElement('div');
+  mctsDiv.className = 'diff-stat hard';
+  mctsDiv.innerHTML = `
+    <h4 data-lang="mcts">${translations[currentLang].mcts}</h4>
+    <p><span data-lang="wins">${translations[currentLang].wins}</span><span id="mcts-wins">${mctsStats.wins}</span></p>
+    <p><span data-lang="losses">${translations[currentLang].losses}</span><span id="mcts-losses">${mctsStats.losses}</span></p>
+    <p><span data-lang="draws">${translations[currentLang].draws}</span><span id="mcts-draws">${mctsStats.draws}</span></p>
+    <p><span data-lang="winRate">${translations[currentLang].winRate}</span><span id="mcts-winrate">${mctsWinRate}%</span></p>
+    <p><span data-lang="pureWinRate">${translations[currentLang].pureWinRate}</span><span id="mcts-pure-winrate">${mctsPureWinRate}%</span></p>
+  `;
+  
+  // 创建Minimax算法统计区块
+  const minimaxStats = userStats[difficulty].minimax;
+  const minimaxWinRate = calculateWinRate(minimaxStats);
+  const minimaxPureWinRate = calculatePureWinRate(minimaxStats);
+  
+  const minimaxDiv = document.createElement('div');
+  minimaxDiv.className = 'diff-stat hard';
+  
+  // 为极小极大算法标题特殊处理，去掉"完美对弈"后缀
+  let minimaxTitle = '';
+  if (currentLang === 'zh') {
+    minimaxTitle = '极小极大算法';
+  } else if (currentLang === 'en') {
+    minimaxTitle = 'Minimax Algorithm';
+  } else if (currentLang === 'ja') {
+    minimaxTitle = 'ミニマックスアルゴリズム';
+  } else if (currentLang === 'ko') {
+    minimaxTitle = '미니맥스 알고리즘';
+  } else if (currentLang === 'ru') {
+    minimaxTitle = 'Алгоритм минимакс';
+  } else if (currentLang === 'fr') {
+    minimaxTitle = 'Algorithme Minimax';
+  } else {
+    // 默认使用翻译键值
+    minimaxTitle = translations[currentLang].minimax.split('（')[0].split('(')[0];
+  }
+  
+  minimaxDiv.innerHTML = `
+    <h4>${minimaxTitle}</h4>
+    <p><span data-lang="wins">${translations[currentLang].wins}</span><span id="minimax-wins">${minimaxStats.wins}</span></p>
+    <p><span data-lang="losses">${translations[currentLang].losses}</span><span id="minimax-losses">${minimaxStats.losses}</span></p>
+    <p><span data-lang="draws">${translations[currentLang].draws}</span><span id="minimax-draws">${minimaxStats.draws}</span></p>
+    <p><span data-lang="winRate">${translations[currentLang].winRate}</span><span id="minimax-winrate">${minimaxWinRate}%</span></p>
+    <p><span data-lang="pureWinRate">${translations[currentLang].pureWinRate}</span><span id="minimax-pure-winrate">${minimaxPureWinRate}%</span></p>
+  `;
+  
+  // 添加到容器
+  statsContainer.appendChild(mctsDiv);
+  statsContainer.appendChild(minimaxDiv);
+  
+  // 设置彩虹效果
+  const winRateElements = [
+    { element: document.getElementById('mcts-winrate'), value: mctsWinRate },
+    { element: document.getElementById('mcts-pure-winrate'), value: mctsPureWinRate },
+    { element: document.getElementById('minimax-winrate'), value: minimaxWinRate },
+    { element: document.getElementById('minimax-pure-winrate'), value: minimaxPureWinRate }
+  ];
+  
+  // 移除所有彩虹效果
+  winRateElements.forEach(item => {
+    if (item.element) {
+      item.element.classList.remove('rainbow-text');
+      
+      // 胜率阈值设为60%，纯胜率阈值设为70%
+      if ((item.element.id.includes('pure-winrate') && item.value >= 70) ||
+          (!item.element.id.includes('pure-winrate') && item.value >= 60)) {
+        item.element.classList.add('rainbow-text');
+      }
+    }
+  });
+}
 
-  // 设置颜色效果
-  const winRateValue = parseFloat(winRate);
-  const pureWinRateValue = parseFloat(pureWinRate);
-  
-  // 移除之前的动画类
-  winRateElement.classList.remove('rainbow-text');
-  pureWinRateElement.classList.remove('rainbow-text');
-  
-  // 胜率阈值设为60%，纯胜率阈值设为70%
-  if (winRateValue >= 60) {
-    winRateElement.classList.add('rainbow-text');
-  }
-  if (pureWinRateValue >= 70) {
-    pureWinRateElement.classList.add('rainbow-text');
-  }
+// 修改resetStats函数
+function resetStats() {
+    const btn = document.querySelector('.reset-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-dots">' + translations[currentLang].resetting + '</span>';
+    
+    setTimeout(() => {
+        if (confirm(translations[currentLang].confirmReset)) {
+            userStats = {
+                hard: {
+                    mcts: { wins: 0, losses: 0, draws: 0 },
+                    minimax: { wins: 0, losses: 0, draws: 0 }
+                }
+            };
+            saveUserStats();
+            updateStatsDisplay();
+            
+            // 添加视觉反馈
+            btn.style.backgroundColor = '#4CAF50';
+            btn.style.color = 'white';
+            btn.innerHTML = translations[currentLang].resetComplete;
+            
+            setTimeout(() => {
+                btn.innerHTML = translations[currentLang].resetStats;
+                btn.style.backgroundColor = '';
+                btn.style.color = '';
+                btn.disabled = false;
+            }, 1000);
+        } else {
+            btn.innerHTML = translations[currentLang].resetStats;
+            btn.disabled = false;
+        }
+    }, 300);
 }
 
 // 页面加载时初始化
@@ -2024,6 +2197,12 @@ document.addEventListener('DOMContentLoaded', () => {
         aiIterations = parseInt(defaultBtn.getAttribute('data-iterations'));
     }
     updateHintButton();
+    
+    // 添加算法选择器
+    createAlgorithmSelector();
+    
+    // 更新窗口对象
+    window.setAlgorithm = setAlgorithm;
 });
 
 // 1. 首先定义所有全局变量和状态
@@ -2038,7 +2217,10 @@ let gameStarted = false; // 添加游戏开始状态标记
 
 // 添加用户战绩记录
 let userStats = {
-  hard: { wins: 0, losses: 0, draws: 0 }
+  hard: { 
+    mcts: { wins: 0, losses: 0, draws: 0 },
+    minimax: { wins: 0, losses: 0, draws: 0 }
+  }
 };
 
 // 2. 创建Web Worker
@@ -2047,18 +2229,122 @@ const workerCode = `
   ${State.toString()}
   ${MCTS.toString()}
   
-  // 替换为固定奖励值函数
+  // 实现极小极大算法
+  class Minimax {
+    constructor(state, currentPlayer) {
+      this.state = state;
+      this.currentPlayer = currentPlayer;
+    }
+    
+    getBestMove() {
+      // 先检查紧急走法（自己获胜或阻止对手获胜）
+      const urgentMove = this.state.checkUrgentMove(this.currentPlayer);
+      if (urgentMove !== null) return urgentMove;
+      
+      const actions = this.state.getLegalActions();
+      let bestScore = -Infinity;
+      let bestMove = actions[0]; // 默认第一个合法移动
+      
+      for (const action of actions) {
+        const newState = this.state.makeMove(action);
+        const score = this.minimax(newState, 0, false);
+        
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = action;
+        }
+      }
+      
+      return bestMove;
+    }
+    
+    minimax(state, depth, isMaximizing) {
+      // 检查游戏是否结束
+      const result = state.gameOver();
+      if (result !== null) {
+        if (result === 0) return 0; // 平局
+        if (result === this.currentPlayer) {
+          return 10 - depth; // 当前玩家获胜，减去深度以鼓励更快获胜
+        } else {
+          return depth - 10; // 对手获胜，加上深度以延长比赛
+        }
+      }
+      
+      // 如果深度过大，返回启发式评估
+      if (depth > 8) {
+        return this.evaluate(state);
+      }
+      
+      if (isMaximizing) {
+        let bestScore = -Infinity;
+        const actions = state.getLegalActions();
+        
+        for (const action of actions) {
+          const newState = state.makeMove(action);
+          const score = this.minimax(newState, depth + 1, false);
+          bestScore = Math.max(bestScore, score);
+        }
+        
+        return bestScore;
+      } else {
+        let bestScore = Infinity;
+        const actions = state.getLegalActions();
+        
+        for (const action of actions) {
+          const newState = state.makeMove(action);
+          const score = this.minimax(newState, depth + 1, true);
+          bestScore = Math.min(bestScore, score);
+        }
+        
+        return bestScore;
+      }
+    }
+    
+    // 简单的启发式评估函数
+    evaluate(state) {
+      // 如果玩家即将获胜，给予高分
+      if (state.findWinningMove(this.currentPlayer) !== null) {
+        return 5;
+      }
+      
+      // 如果对手即将获胜，给予低分
+      const opponent = this.currentPlayer === 'X' ? 'O' : 'X';
+      if (state.findWinningMove(opponent) !== null) {
+        return -5;
+      }
+      
+      // 如果玩家占据了中心，加分
+      if (state.board[4] === this.currentPlayer) {
+        return 3;
+      }
+      
+      // 如果对手占据了中心，减分
+      if (state.board[4] === opponent) {
+        return -3;
+      }
+      
+      return 0;
+    }
+  }
+  
   function calculateWinReward() {
     return 1.0; // 统一返回固定的获胜奖励值1.0
   }
   
   self.onmessage = function(e) {
-    const { board, currentPlayer, iterations, maxDepth } = e.data;
+    const { board, currentPlayer, iterations, maxDepth, algorithm } = e.data;
     const state = new State(board, currentPlayer);
-    const mcts = new MCTS(state, currentPlayer, iterations, maxDepth);
     
-    // 使用RAVE增强的MCTS算法搜索最佳走法
-    const move = mcts.getBestMove();
+    let move;
+    if (algorithm === 'minimax') {
+      const minimax = new Minimax(state, currentPlayer);
+      move = minimax.getBestMove();
+    } else {
+      // 默认使用MCTS
+      const mcts = new MCTS(state, currentPlayer, iterations, maxDepth);
+      move = mcts.getBestMove();
+    }
+    
     self.postMessage({ move });
   };
 `;
@@ -2167,7 +2453,8 @@ function select(cell) {
         board: gameState.board,
         currentPlayer: gameState.currentPlayer,
         iterations: difficultyMap[currentDifficulty].iterations,
-        maxDepth: difficultyMap[currentDifficulty].maxDepth
+        maxDepth: difficultyMap[currentDifficulty].maxDepth,
+        algorithm: currentAlgorithm // 添加当前算法参数
     });
     
     // 立即更新提示按钮状态
@@ -2320,7 +2607,8 @@ function aiFirst() {
             board: gameState.board,
             currentPlayer: gameState.currentPlayer,
             iterations: difficultyMap[currentDifficulty].iterations,
-            maxDepth: difficultyMap[currentDifficulty].maxDepth
+            maxDepth: difficultyMap[currentDifficulty].maxDepth,
+            algorithm: currentAlgorithm // 添加当前算法参数
         });
     }, 50);
     
@@ -2633,7 +2921,7 @@ let hintMove = null;
 let hintWorker = null;
 let hintHighlightedCell = null; // 新增：记录当前高亮的提示单元格
 
-// 添加calculateHint函数
+// 修改calculateHint函数使用极小极大算法
 function calculateHint() {
     // 只要是玩家回合且游戏未结束，就计算提示
     if (!isPlayerTurn || gameState.gameOver() !== null) {
@@ -2654,71 +2942,16 @@ function calculateHint() {
     // 如果已经有worker在运行，先终止它
     if (hintWorker) {
         hintWorker.terminate();
+        hintWorker = null;
     }
     
     hintMove = null;
     updateHintButton();
     
-    // 检查紧急走法（自己获胜或阻止对手获胜）
-    const urgentMove = gameState.checkUrgentMove(gameState.currentPlayer);
-    if (urgentMove !== null) {
-        console.log("找到紧急走法:", urgentMove);  // 调试日志
-        hintMove = urgentMove;
-        updateHintButton();
-        return;
-    }
-    
-    // 移除对fork moves的检查
-    
-    // 使用MCTS算法分析最佳走法
-    try {
-        hintWorker = new Worker(workerUrl);
-        
-        hintWorker.onmessage = function(e) {
-            const { move } = e.data;
-            console.log("Worker返回走法:", move);  // 调试日志
-            
-            // 确保提示位置是合法的移动
-            if (gameState.canMove(move)) {
-                hintMove = move;
-                
-                // 额外验证提示质量
-                const tempState = new State([...gameState.board], gameState.currentPlayer);
-                // 检查走这步棋后对手是否有获胜走法
-                const tempNextState = tempState.makeMove(move);
-                const urgentOpponentMove = tempNextState.checkUrgentMove(tempNextState.currentPlayer);
-                
-                // 如果这步棋会导致对手直接获胜，尝试找另一步棋（除非没有选择）
-                if (urgentOpponentMove !== null && gameState.getLegalActions().length > 1) {
-                    // 重新计算，排除这一步
-                    const legalMoves = gameState.getLegalActions().filter(m => m !== move);
-                    // 随机选择一步，避免重复之前的错误提示
-                    hintMove = legalMoves[Math.floor(Math.random() * legalMoves.length)];
-                }
-            } else {
-                hintMove = null;
-            }
-            updateHintButton(); // 确保每次计算完成后都更新按钮状态
-        };
-
-        hintWorker.onerror = function(error) {
-            console.error('提示计算错误:', error);
-            hintMove = null;
-            updateHintButton();
-        };
-        
-        // 使用最高难度的迭代次数计算提示，增加迭代次数以提高准确性
-        hintWorker.postMessage({
-            board: gameState.board,
-            currentPlayer: gameState.currentPlayer,
-            iterations: difficultyMap.hard.iterations * 1.5, // 使用比困难难度更多的迭代次数
-            maxDepth: difficultyMap.hard.maxDepth + 2 // 更深的搜索深度
-        });
-    } catch (error) {
-        console.error("创建提示Worker失败:", error);
-        hintMove = null;
-        updateHintButton();
-    }
+    // 使用极小极大算法计算提示（不管当前使用的是什么算法）
+    const minimax = new Minimax(gameState, gameState.currentPlayer);
+    hintMove = minimax.getBestMove();
+    updateHintButton();
 }
 
 // 在DOMContentLoaded事件中添加
@@ -2774,5 +3007,146 @@ aiWorker.onerror = function(error) {
     hideLoading();
     // 可以在这里添加用户友好的错误提示
 };
+
+// 添加当前算法变量
+let currentAlgorithm = 'mcts'; // 默认使用蒙特卡洛树搜索算法
+
+// 创建算法选择器函数
+function createAlgorithmSelector() {
+  const container = document.createElement('div');
+  container.className = 'algorithm-selector';
+  container.innerHTML = `
+    <span data-lang="algorithm">算法</span>
+    <button class="algorithm-btn active" data-algorithm="mcts" onclick="setAlgorithm(this)">
+      <span data-lang="mcts">蒙特卡洛树算法</span>
+    </button>
+    <button class="algorithm-btn" data-algorithm="minimax" onclick="setAlgorithm(this)">
+      <span data-lang="minimax">极小极大算法（完美对弈）</span>
+    </button>
+  `;
+  
+  // 在难度选择器后面插入
+  const difficultySelector = document.querySelector('.difficulty-selector');
+  difficultySelector.parentNode.insertBefore(container, difficultySelector.nextSibling);
+}
+
+// 设置算法函数
+function setAlgorithm(btn) {
+  // 如果游戏正在进行中且玩家已经走了棋，不允许切换算法
+  if (gameStarted && document.querySelector('td span')) {
+    alert(translations[currentLang].cannotChangeAlgorithm || '游戏进行中无法更换算法');
+    return;
+  }
+  
+  const algorithm = btn.getAttribute('data-algorithm');
+  currentAlgorithm = algorithm;
+  
+  // 更新按钮状态
+  document.querySelectorAll('.algorithm-btn').forEach(b => {
+    b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  
+  // 重启游戏
+  restart();
+}
+
+// 实现Minimax类
+class Minimax {
+  constructor(state, currentPlayer) {
+    this.state = state;
+    this.currentPlayer = currentPlayer;
+  }
+  
+  getBestMove() {
+    // 先检查紧急走法（自己获胜或阻止对手获胜）
+    const urgentMove = this.state.checkUrgentMove(this.currentPlayer);
+    if (urgentMove !== null) return urgentMove;
+    
+    const actions = this.state.getLegalActions();
+    let bestScore = -Infinity;
+    let bestMove = actions[0]; // 默认第一个合法移动
+    
+    for (const action of actions) {
+      const newState = this.state.makeMove(action);
+      const score = this.minimax(newState, 0, false);
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = action;
+      }
+    }
+    
+    return bestMove;
+  }
+  
+  minimax(state, depth, isMaximizing) {
+    // 检查游戏是否结束
+    const result = state.gameOver();
+    if (result !== null) {
+      if (result === 0) return 0; // 平局
+      if (result === this.currentPlayer) {
+        return 10 - depth; // 当前玩家获胜，减去深度以鼓励更快获胜
+      } else {
+        return depth - 10; // 对手获胜，加上深度以延长比赛
+      }
+    }
+    
+    // 如果深度过大，返回启发式评估
+    if (depth > 8) {
+      return this.evaluate(state);
+    }
+    
+    if (isMaximizing) {
+      let bestScore = -Infinity;
+      const actions = state.getLegalActions();
+      
+      for (const action of actions) {
+        const newState = state.makeMove(action);
+        const score = this.minimax(newState, depth + 1, false);
+        bestScore = Math.max(bestScore, score);
+      }
+      
+      return bestScore;
+    } else {
+      let bestScore = Infinity;
+      const actions = state.getLegalActions();
+      
+      for (const action of actions) {
+        const newState = state.makeMove(action);
+        const score = this.minimax(newState, depth + 1, true);
+        bestScore = Math.min(bestScore, score);
+      }
+      
+      return bestScore;
+    }
+  }
+  
+  // 简单的启发式评估函数
+  evaluate(state) {
+    // 如果玩家即将获胜，给予高分
+    if (state.findWinningMove(this.currentPlayer) !== null) {
+      return 5;
+    }
+    
+    // 如果对手即将获胜，给予低分
+    const opponent = this.currentPlayer === 'X' ? 'O' : 'X';
+    if (state.findWinningMove(opponent) !== null) {
+      return -5;
+    }
+    
+    // 如果玩家占据了中心，加分
+    if (state.board[4] === this.currentPlayer) {
+      return 3;
+    }
+    
+    // 如果对手占据了中心，减分
+    if (state.board[4] === opponent) {
+      return -3;
+    }
+    
+    return 0;
+  }
+}
 </script>
 </html>
