@@ -5,6 +5,10 @@
 ![게임 미리보기](preview.jpeg)
 *참고: preview.ko.jpeg 파일이 존재하는 경우 해당 이미지가 우선적으로 표시됩니다*
 
+## 온라인 게임
+
+여기에서 온라인으로 게임을 플레이할 수 있습니다: [https://ian-miller.github.io/tic-tac-toe/](https://ian-miller.github.io/tic-tac-toe/)
+
 ## 프로젝트 소개
 
 이것은 몬테카를로 트리 검색(MCTS) 알고리즘을 사용하여 구현된 틱택토 게임입니다.

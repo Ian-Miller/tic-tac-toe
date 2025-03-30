@@ -5,6 +5,10 @@
 ![ゲームプレビュー](preview.jpeg)
 *注：preview.ja.jpegが存在する場合、そちらが優先的に表示されます*
 
+## オンラインゲーム
+
+ここでオンラインでゲームをプレイできます：[https://ian-miller.github.io/tic-tac-toe/](https://ian-miller.github.io/tic-tac-toe/)
+
 ## プロジェクト紹介
 
 これはモンテカルロ木探索(MCTS)アルゴリズムを用いて実装された三目並べゲームです。

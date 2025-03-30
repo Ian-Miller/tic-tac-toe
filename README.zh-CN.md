@@ -5,6 +5,10 @@
 ![游戏界面预览](preview.jpeg)
 *注：如果存在preview.zh-CN.jpeg，将优先显示该图片*
 
+## 在线游戏
+
+你可以在这里在线体验游戏：[https://ian-miller.github.io/tic-tac-toe/](https://ian-miller.github.io/tic-tac-toe/)
+
 ## 项目简介
 
 这是一个基于蒙特卡洛树搜索(MCTS)算法实现的井字棋游戏。

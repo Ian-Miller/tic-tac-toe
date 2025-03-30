@@ -5,6 +5,10 @@
 ![Aperçu du jeu](preview.jpeg)
 *Note : Si preview.fr.jpeg existe, il sera affiché à la place*
 
+## Jeu en ligne
+
+Vous pouvez jouer au jeu en ligne ici : [https://ian-miller.github.io/tic-tac-toe/](https://ian-miller.github.io/tic-tac-toe/)
+
 ## Présentation du projet
 
 Ceci est un jeu de Tic-Tac-Toe implémenté à l'aide de l'algorithme de recherche arborescente Monte-Carlo (MCTS).

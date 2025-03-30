@@ -5,6 +5,10 @@
 ![Game preview](preview.jpeg)
 *Note: If preview.en.jpeg exists, it will be displayed instead*
 
+## Online Game
+
+You can play the game online at: [https://ian-miller.github.io/tic-tac-toe/](https://ian-miller.github.io/tic-tac-toe/)
+
 ## Project Introduction
 
 This is a Tic-Tac-Toe game implemented using the Monte Carlo Tree Search (MCTS) algorithm.
