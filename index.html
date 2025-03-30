@@ -946,11 +946,51 @@
 
   /* 重置按钮样式调整 */
   .reset-btn {
+    position: relative;
+    overflow: hidden;
+    transition: color 0.3s ease;
     display: block;
-    width: fit-content; /* 根据内容自适应宽度 */
-    margin: 15px auto 0; /* 只在顶部有外边距，水平居中 */
+    width: 100px; /* 固定宽度 */
+    min-width: 100px; /* 确保最小宽度 */
+    text-align: center; /* 文本居中 */
+    margin: 15px auto 0;
     padding: 6px 12px;
-    /* 其他样式保持不变 */
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 1; /* 确保内容在伪元素之上 */
+  }
+
+  .reset-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #ff6b6b;
+    transform: translateX(-100%);
+    transition: transform 0.4s ease;
+    z-index: -1;
+  }
+
+  .reset-btn.confirm::before {
+    transform: translateX(0);
+  }
+
+  .reset-btn.confirm {
+    color: white;
+  }
+
+  .reset-btn.success::before {
+    background-color: #4CAF50;
+    transform: translateX(0);
+  }
+
+  .reset-btn.success {
+    color: white;
   }
 
   /* 移动端适配 */
@@ -1200,6 +1240,8 @@ const translations = {
     resetStats: '重置战绩',
     resetting: '重置中...',
     confirmReset: '确定要重置所有战绩数据吗？',
+    confirmReset2: '确定重置',  // 新增：确认重置（固定4字符）
+    resetDone: '已重置',    // 新增：重置完成（固定3字符）
     resetComplete: '已重置！',
     hint: "提示",
     cannotChangeDifficulty: '游戏进行中无法更换难度',
@@ -1241,6 +1283,8 @@ const translations = {
     resetStats: 'Reset Stats',
     resetting: 'Resetting...',
     confirmReset: 'Are you sure you want to reset all stats?',
+    confirmReset2: 'Confirm',  // 新增：确认重置（固定4字符）
+    resetDone: 'Done',     // 新增：重置完成（固定3字符）
     resetComplete: 'Reset Complete!',
     hint: "Hint",
     cannotChangeDifficulty: 'Cannot change difficulty while game is in progress',
@@ -1282,6 +1326,8 @@ const translations = {
     resetStats: '戦績リセット',
     resetting: 'リセット中...',
     confirmReset: '本当にすべての戦績をリセットしますか？',
+    confirmReset2: '確認',  // 新增：确认重置（固定2字符）
+    resetDone: '完了',      // 新增：重置完成（固定2字符）
     resetComplete: 'リセット完了！',
     hint: "ヒント",
     cannotChangeDifficulty: 'ゲーム中に難易度を変更できません',
@@ -1323,6 +1369,8 @@ const translations = {
     resetStats: '전적 초기화',
     resetting: '리셋중...',
     confirmReset: '정말로 모든 전적을 초기화하시겠습니까?',
+    confirmReset2: '확인',   // 新增：确认重置（固定2字符）
+    resetDone: '완료',      // 新增：重置完成（固定2字符）
     resetComplete: '리셋 완료!',
     hint: "힌트",
     cannotChangeDifficulty: '게임 진행 중에는 난이도를 변경할 수 없습니다',
@@ -1364,6 +1412,8 @@ const translations = {
     resetStats: 'Сбросить статистику',
     resetting: 'Перезапуск...',
     confirmReset: 'Вы уверены, что хотите сбросить все статистические данные?',
+    confirmReset2: 'Сброс',  // 新增：确认重置（固定4字符）
+    resetDone: 'Готово',     // 新增：重置完成（固定4字符）
     resetComplete: 'Статистика сброшена!',
     hint: "Подсказка",
     cannotChangeDifficulty: 'Невозможно изменить сложность во время игры',
@@ -1405,6 +1455,8 @@ const translations = {
     resetStats: 'Réinitialiser les statistiques',
     resetting: 'Réinitialisation...',
     confirmReset: 'Êtes-vous sûr de vouloir réinitialiser toutes les statistiques ?',
+    confirmReset2: 'Valid',   // 新增：确认重置（固定5字符）
+    resetDone: 'Fait',       // 新增：重置完成（固定4字符）
     resetComplete: 'Statistiques réinitialisées !',
     hint: "Indice",
     cannotChangeDifficulty: 'Impossible de changer de difficulté pendant la partie',
@@ -2061,37 +2113,67 @@ function updateStatsDisplay() {
 
 // 修改resetStats函数
 function resetStats() {
-    const btn = document.querySelector('.reset-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="loading-dots">' + translations[currentLang].resetting + '</span>';
+  const btn = document.querySelector('.reset-btn');
+  
+  // 如果有正在处理的点击，则忽略新的点击
+  if (btn.dataset.isProcessing === 'true') {
+    return;
+  }
+  
+  // 设置处理标志，防止重复点击
+  btn.dataset.isProcessing = 'true';
+  
+  // 如果按钮当前已经处于确认状态，则执行重置
+  if (btn.classList.contains('confirm')) {
+    // 清除之前设置的定时器
+    if (btn.dataset.timerId) {
+      clearTimeout(parseInt(btn.dataset.timerId));
+      delete btn.dataset.timerId;
+    }
     
+    // 执行重置操作
+    userStats = {
+      hard: {
+        mcts: { wins: 0, losses: 0, draws: 0 },
+        minimax: { wins: 0, losses: 0, draws: 0 }
+      }
+    };
+    saveUserStats();
+    updateStatsDisplay();
+    
+    // 修改按钮样式为成功状态
+    btn.classList.remove('confirm');
+    btn.classList.add('success');
+    btn.innerHTML = translations[currentLang].resetDone; 
+    
+    // 一段时间后恢复原样
     setTimeout(() => {
-        if (confirm(translations[currentLang].confirmReset)) {
-            userStats = {
-                hard: {
-                    mcts: { wins: 0, losses: 0, draws: 0 },
-                    minimax: { wins: 0, losses: 0, draws: 0 }
-                }
-            };
-            saveUserStats();
-            updateStatsDisplay();
-            
-            // 添加视觉反馈
-            btn.style.backgroundColor = '#4CAF50';
-            btn.style.color = 'white';
-            btn.innerHTML = translations[currentLang].resetComplete;
-            
-            setTimeout(() => {
-                btn.innerHTML = translations[currentLang].resetStats;
-                btn.style.backgroundColor = '';
-                btn.style.color = '';
-                btn.disabled = false;
-            }, 1000);
-        } else {
-            btn.innerHTML = translations[currentLang].resetStats;
-            btn.disabled = false;
-        }
-    }, 300);
+      btn.classList.remove('success');
+      btn.innerHTML = translations[currentLang].resetStats;
+      btn.dataset.isProcessing = 'false'; // 恢复处理标志
+    }, 1500);
+    
+    return;
+  }
+  
+  // 首次点击，修改按钮为确认状态
+  btn.classList.add('confirm');
+  btn.innerHTML = translations[currentLang].confirmReset2;
+  
+  // 设置定时器，如果用户没有确认，一段时间后恢复原样
+  const timer = setTimeout(() => {
+    btn.classList.remove('confirm');
+    btn.innerHTML = translations[currentLang].resetStats;
+    btn.dataset.isProcessing = 'false'; // 恢复处理标志
+  }, 3000); // 3秒后重置
+  
+  // 保存定时器ID，以便在用户确认时可以清除
+  btn.dataset.timerId = timer;
+  
+  // 允许第二次点击（确认操作）
+  setTimeout(() => {
+    btn.dataset.isProcessing = 'false';
+  }, 100); // 短暂延迟，防止同一次点击被多次触发
 }
 
 // 页面加载时初始化
@@ -2721,6 +2803,7 @@ window.switchLang = switchLang;
 window.setDifficulty = setDifficulty;
 window.toggleLangOptions = toggleLangOptions;
 window.detectBrowserLanguage = detectBrowserLanguage;
+window.resetStats = resetStats;
 
 // 8. 清理函数
 window.addEventListener('beforeunload', () => {
@@ -2828,38 +2911,6 @@ function debugDifficulty() {
     console.log('简单模式战绩:', userStats.easy);
     console.log('中等模式战绩:', userStats.medium);
     console.log('困难模式战绩:', userStats.hard);
-}
-
-// 添加重置统计函数
-function resetStats() {
-    const btn = document.querySelector('.reset-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="loading-dots">' + translations[currentLang].resetting + '</span>';
-    
-    setTimeout(() => {
-        if (confirm(translations[currentLang].confirmReset)) {
-            userStats = {
-                hard: { wins: 0, losses: 0, draws: 0 }
-            };
-            saveUserStats();
-            updateStatsDisplay();
-            
-            // 添加视觉反馈
-            btn.style.backgroundColor = '#4CAF50';
-            btn.style.color = 'white';
-            btn.innerHTML = translations[currentLang].resetComplete;
-            
-            setTimeout(() => {
-                btn.innerHTML = translations[currentLang].resetStats;
-                btn.style.backgroundColor = '';
-                btn.style.color = '';
-                btn.disabled = false;
-            }, 1000);
-        } else {
-            btn.innerHTML = translations[currentLang].resetStats;
-            btn.disabled = false;
-        }
-    }, 300);
 }
 
 // 添加获取提示的函数
