@@ -136,345 +136,15 @@ class Game {
    * 创建AI Worker
    */
   createAIWorker() {
-    // 创建Blob URL
-    const workerScript = `
-      self.onmessage = function(e) {
-        const { board, currentPlayer, iterations, maxDepth, algorithm } = e.data;
-        
-        // 导入游戏状态类
-        class State {
-          constructor(board=['','','','','','','','',''], currentPlayer) {
-            this.board = board.slice();
-            this.currentPlayer = currentPlayer;
-            this.lastMove = -1;
-          }
-          
-          canMove(move) {
-            return move >= 0 && this.board[move] === '';
-          }
-          
-          makeMove(move) {
-            const newBoard = this.board.slice();
-            newBoard[move] = this.currentPlayer;
-            const nextPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
-            const newState = new State(newBoard, nextPlayer);
-            newState.lastMove = move;
-            newState.movedPlayer = this.currentPlayer;
-            return newState;
-          }
-          
-          gameOver() {
-            const lines = [
-              [0, 1, 2], [3, 4, 5], [6, 7, 8],
-              [0, 3, 6], [1, 4, 7], [2, 5, 8],
-              [0, 4, 8], [2, 4, 6]
-            ];
-            for (const [a, b, c] of lines) {
-              if (this.board[a] && this.board[a] === this.board[b] && this.board[a] === this.board[c]) {
-                return this.board[a];
-              }
-            }
-            return this.board.includes('') ? null : 0;
-          }
-          
-          getLegalActions() {
-            const actions = [];
-            for (let i = 0; i < this.board.length; i++) {
-              if (this.board[i] === '') {
-                actions.push(i);
-              }
-            }
-            return actions;
-          }
-          
-          getLegalActionsLength() {
-            let count = 0;
-            for (let i = 0; i < this.board.length; i++) {
-              if (this.board[i] === '') count++;
-            }
-            return count;
-          }
-          
-          checkUrgentMove(player) {
-            const winMove = this.findWinningMove(player);
-            if (winMove !== null) return winMove;
-            
-            const opponent = player === 'X' ? 'O' : 'X';
-            const blockMove = this.findWinningMove(opponent);
-            if (blockMove !== null) return blockMove;
-            
-            return null;
-          }
-          
-          findWinningMove(player) {
-            const lines = [
-              [0, 1, 2], [3, 4, 5], [6, 7, 8],
-              [0, 3, 6], [1, 4, 7], [2, 5, 8],
-              [0, 4, 8], [2, 4, 6]
-            ];
-            
-            for (const [a, b, c] of lines) {
-              if (this.board[a] === player && this.board[b] === player && this.board[c] === '') {
-                return c;
-              }
-              if (this.board[a] === player && this.board[c] === player && this.board[b] === '') {
-                return b;
-              }
-              if (this.board[b] === player && this.board[c] === player && this.board[a] === '') {
-                return a;
-              }
-            }
-            return null;
-          }
-        }
-        
-        // 导入MCTS算法
-        class MCTSNode {
-          constructor(state, parent = null) {
-            this.state = state;
-            this.parent = parent;
-            this.children = [];
-            this.visits = 0;
-            this.wins = 0;
-          }
-          
-          ucb(standpoint, temperature = 1.0) {
-            if (this.visits === 0) return Infinity;
-            const winRate = this.wins / this.visits;
-            const normalizedWinRate = Math.max(0, Math.min(1, winRate));
-            const exploration = Math.sqrt(2 * temperature * Math.log(this.parent.visits) / this.visits);
-            return normalizedWinRate + exploration;
-          }
-          
-          expandAll() {
-            const actions = this.state.getLegalActions();
-            for (const action of actions) {
-              const newState = this.state.makeMove(action);
-              this.children.push(new MCTSNode(newState, this));
-            }
-          }
-          
-          isExpanded() {
-            return this.children.length === this.state.getLegalActionsLength();
-          }
-        }
-        
-        class MCTS {
-          constructor(state, currentPlayer, iterations, maxDepth) {
-            this.root = new MCTSNode(state);
-            this.currentPlayer = currentPlayer;
-            this.iterations = iterations;
-            this.maxDepth = maxDepth;
-          }
-          
-          iterate(iteration = 0, totalIterations = this.iterations) {
-            const temperature = Math.max(0.5, 1.0 - (iteration / totalIterations) * 0.5);
-            
-            if (!this.root.isExpanded()) {
-              this.root.expandAll();
-            }
-            
-            let node = this.root;
-            while (node.isExpanded() && node.children.length > 0) {
-              const urgentMove = node.state.checkUrgentMove(node.state.currentPlayer);
-              if (urgentMove !== null) {
-                node = node.children.find(child => child.state.lastMove === urgentMove);
-                continue;
-              }
-              
-              let bestChild = null;
-              let bestScore = -Infinity;
-              for (const child of node.children) {
-                const score = child.ucb(this.currentPlayer, temperature);
-                if (score > bestScore) {
-                  bestScore = score;
-                  bestChild = child;
-                }
-              }
-              node = bestChild;
-            }
-            
-            if (!node.isExpanded()) {
-              node.expandAll();
-              if (node.children.length > 0) {
-                const urgentMove = node.state.checkUrgentMove(node.state.currentPlayer);
-                if (urgentMove !== null) {
-                  node = node.children.find(child => child.state.lastMove === urgentMove);
-                } else {
-                  node = node.children[Math.floor(Math.random() * node.children.length)];
-                }
-              }
-            }
-            
-            let state = node.state;
-            while (state.gameOver() === null) {
-              const actions = state.getLegalActions();
-              let selectedMove;
-              
-              const urgentMove = state.checkUrgentMove(state.currentPlayer);
-              if (urgentMove !== null) {
-                selectedMove = urgentMove;
-              } else {
-                selectedMove = actions[Math.floor(Math.random() * actions.length)];
-              }
-              
-              state = state.makeMove(selectedMove);
-            }
-            
-            let result = state.gameOver();
-            
-            while (node !== null) {
-              node.visits++;
-              
-              if (result === 0) {
-                node.wins += 0.5;
-              } else if (node.state.movedPlayer === result) {
-                node.wins += 0.0;
-              } else {
-                node.wins += 1.0;
-              }
-              
-              node = node.parent;
-            }
-          }
-          
-          getBestMove() {
-            const urgentMove = this.root.state.checkUrgentMove(this.currentPlayer);
-            if (urgentMove !== null) return urgentMove;
-            
-            for (let i = 0; i < this.iterations; i++) {
-              this.iterate(i, this.iterations);
-            }
-            
-            let bestChild = null;
-            let bestVisits = -1;
-            for (const child of this.root.children) {
-              const visits = child.visits;
-              
-              if (visits > bestVisits) {
-                bestVisits = visits;
-                bestChild = child;
-              }
-            }
-            
-            return bestChild ? bestChild.state.lastMove : this.root.state.getLegalActions()[0];
-          }
-        }
-        
-        // 导入极小极大算法
-        class Minimax {
-          constructor(state, currentPlayer) {
-            this.state = state;
-            this.currentPlayer = currentPlayer;
-          }
-          
-          getBestMove() {
-            const urgentMove = this.state.checkUrgentMove(this.currentPlayer);
-            if (urgentMove !== null) return urgentMove;
-            
-            const actions = this.state.getLegalActions();
-            let bestScore = -Infinity;
-            let bestMove = actions[0];
-            
-            for (const action of actions) {
-              const newState = this.state.makeMove(action);
-              const score = this.minimax(newState, 0, false);
-              
-              if (score > bestScore) {
-                bestScore = score;
-                bestMove = action;
-              }
-            }
-            
-            return bestMove;
-          }
-          
-          minimax(state, depth, isMaximizing) {
-            const result = state.gameOver();
-            if (result !== null) {
-              if (result === 0) return 0;
-              if (result === this.currentPlayer) {
-                return 10 - depth;
-              } else {
-                return depth - 10;
-              }
-            }
-            
-            if (depth > 8) {
-              return this.evaluate(state);
-            }
-            
-            if (isMaximizing) {
-              let bestScore = -Infinity;
-              const actions = state.getLegalActions();
-              
-              for (const action of actions) {
-                const newState = state.makeMove(action);
-                const score = this.minimax(newState, depth + 1, false);
-                bestScore = Math.max(bestScore, score);
-              }
-              
-              return bestScore;
-            } else {
-              let bestScore = Infinity;
-              const actions = state.getLegalActions();
-              
-              for (const action of actions) {
-                const newState = state.makeMove(action);
-                const score = this.minimax(newState, depth + 1, true);
-                bestScore = Math.min(bestScore, score);
-              }
-              
-              return bestScore;
-            }
-          }
-          
-          evaluate(state) {
-            if (state.findWinningMove(this.currentPlayer) !== null) {
-              return 5;
-            }
-            
-            const opponent = this.currentPlayer === 'X' ? 'O' : 'X';
-            if (state.findWinningMove(opponent) !== null) {
-              return -5;
-            }
-            
-            if (state.board[4] === this.currentPlayer) {
-              return 3;
-            }
-            
-            if (state.board[4] === opponent) {
-              return -3;
-            }
-            
-            return 0;
-          }
-        }
-        
-        // 根据选择的算法执行计算
-        let bestMove;
-        const gameState = new State(board, currentPlayer);
-        
-        if (algorithm === 'minimax') {
-          const minimax = new Minimax(gameState, currentPlayer);
-          bestMove = minimax.getBestMove();
-        } else {
-          // 默认使用MCTS
-          const mcts = new MCTS(gameState, currentPlayer, iterations, maxDepth);
-          bestMove = mcts.getBestMove();
-        }
-        
-        // 返回最佳移动
-        self.postMessage({ move: bestMove });
-      };
-    `;
-    
-    const blob = new Blob([workerScript], { type: 'application/javascript' });
-    const workerUrl = URL.createObjectURL(blob);
-    
-    // 创建Worker
+    // 使用外部脚本文件
     if (window.Worker) {
-      this.aiWorker = new Worker(workerUrl);
+      // 终止旧的worker（如果存在）
+      if (this.aiWorker) {
+        this.aiWorker.terminate();
+      }
+
+      // 创建新的worker
+      this.aiWorker = new Worker('js/ai-worker.js');
       
       // 处理Worker消息
       this.aiWorker.onmessage = (e) => {
@@ -495,6 +165,17 @@ class Game {
           this.processAIMove(move);
         }
       };
+
+      // 添加错误处理
+      this.aiWorker.onerror = (error) => {
+        console.error('AI Worker 错误:', error.message);
+        // 在发生错误时隐藏加载指示器
+        this.hideLoading();
+        // 重置为玩家回合
+        this.isPlayerTurn = true;
+      };
+    } else {
+      console.error('浏览器不支持Web Workers');
     }
   }
   
@@ -803,10 +484,40 @@ class Game {
     this.hintMove = null;
     UI.updateHintButton(this);
     
-    // 使用极小极大算法计算提示（不管当前使用的是什么算法）
-    const minimax = new Minimax(this.gameState, this.gameState.currentPlayer);
-    this.hintMove = minimax.getBestMove();
-    UI.updateHintButton(this);
+    // 使用Web Worker计算提示
+    if (window.Worker) {
+      // 创建提示计算Worker
+      this.hintWorker = new Worker('js/hint-worker.js');
+      
+      // 处理Worker消息
+      this.hintWorker.onmessage = (e) => {
+        const { hintMove } = e.data;
+        this.hintMove = hintMove;
+        UI.updateHintButton(this);
+        
+        // 计算完成后终止Worker
+        this.hintWorker.terminate();
+        this.hintWorker = null;
+      };
+      
+      // 添加错误处理
+      this.hintWorker.onerror = (error) => {
+        console.error('提示计算Worker错误:', error.message);
+        this.hintMove = null;
+        UI.updateHintButton(this);
+      };
+      
+      // 发送消息给Worker
+      this.hintWorker.postMessage({
+        board: this.gameState.board,
+        currentPlayer: this.gameState.currentPlayer
+      });
+    } else {
+      // 浏览器不支持Web Workers时，使用主线程计算
+      const minimax = new Minimax(this.gameState, this.gameState.currentPlayer);
+      this.hintMove = minimax.getBestMove();
+      UI.updateHintButton(this);
+    }
   }
   
   /**
